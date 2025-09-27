@@ -35,6 +35,9 @@ dependencies:
   # UI Icons
   cupertino_icons: ^1.0.8
 
+  # Functional Programming
+  dartz: ^0.10.1
+
   # State Management
   flutter_bloc: ^8.1.6
   bloc: ^8.1.4
