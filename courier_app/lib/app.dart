@@ -1,3 +1,4 @@
+import 'package:delivery_app/core/constants/app_strings.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'core/config/app_config.dart';
@@ -11,7 +12,7 @@ class CourierApp extends StatelessWidget {
         minTextAdapt: true,
         splitScreenMode: true,
         builder: (context, child) => MaterialApp(
-          title: 'Courier Delivery',
+          title: AppStrings.appTitle,
           debugShowCheckedModeBanner: AppConfig.isDebug,
           theme: ThemeData(
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
@@ -29,7 +30,7 @@ class CourierApp extends StatelessWidget {
                   ),
                   SizedBox(height: 20),
                   Text(
-                    'Courier Delivery App',
+                    AppStrings.appTitle,
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
