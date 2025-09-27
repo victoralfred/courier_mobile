@@ -81,24 +81,22 @@ class User extends Equatable {
     UserStatus? status,
     DateTime? createdAt,
     DateTime? updatedAt,
-  }) {
-    return User(
-      id: id ?? this.id,
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      email: email ?? this.email,
-      phone: phone ?? this.phone,
-      status: status ?? this.status,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? DateTime.now(), // Always update the timestamp
-    );
-  }
+  }) =>
+      User(
+        id: id ?? this.id,
+        firstName: firstName ?? this.firstName,
+        lastName: lastName ?? this.lastName,
+        email: email ?? this.email,
+        phone: phone ?? this.phone,
+        status: status ?? this.status,
+        createdAt: createdAt ?? this.createdAt,
+        updatedAt: updatedAt ?? DateTime.now(), // Always update the timestamp
+      );
 
   @override
   List<Object> get props => [id]; // Equality based on ID only
 
   @override
-  String toString() {
-    return 'User(id: $id, name: $fullName, email: $email, status: $status)';
-  }
+  String toString() =>
+      'User(id: $id, name: $fullName, email: $email, status: $status)';
 }

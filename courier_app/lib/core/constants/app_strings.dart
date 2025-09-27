@@ -186,6 +186,30 @@ class AppStrings {
   static const String errorLastNameTooLong = 'Last name must not exceed 50 characters';
   static const String errorInvalidUserStatus = 'Invalid user status: {status}';
 
+  // Authentication Messages
+  static const String authLoginSuccess = 'Login successful';
+  static const String authLogoutSuccess = 'Logout successful';
+  static const String authRegisterSuccess = 'Registration successful';
+  static const String authTokenRefreshed = 'Session refreshed';
+  static const String authPasswordResetSent = 'Password reset instructions sent to your email';
+  static const String authEmailVerified = 'Email verified successfully';
+  static const String authBiometricEnabled = 'Biometric authentication enabled';
+  static const String authBiometricDisabled = 'Biometric authentication disabled';
+
+  // Authentication Errors
+  static const String errorLoginFailed = 'Login failed. Please check your credentials.';
+  static const String errorRegistrationFailed = 'Registration failed. Please try again.';
+  static const String errorTokenExpired = 'Your session has expired. Please login again.';
+  static const String errorTokenInvalid = 'Invalid authentication token';
+  static const String errorUserNotFound = 'User not found';
+  static const String errorEmailAlreadyExists = 'An account with this email already exists';
+  static const String errorPhoneAlreadyExists = 'An account with this phone number already exists';
+  static const String errorWeakPassword = 'Password is too weak';
+  static const String errorPasswordsDoNotMatch = 'Passwords do not match';
+  static const String errorBiometricNotAvailable = 'Biometric authentication is not available on this device';
+  static const String errorBiometricNotEnrolled = 'No biometric credentials are enrolled';
+  static const String errorBiometricFailed = 'Biometric authentication failed';
+
   // Error Codes (for mapping backend error codes)
   static const String errorCodeValidation = 'VALIDATION_ERROR';
   static const String errorCodeUnauthorized = 'UNAUTHORIZED';
