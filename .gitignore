@@ -44,3 +44,6 @@ linux/flutter/generated_plugin_registrant.cc
 *.log
 *.lock
 *.md
+courier_app/API_ALIGNMENT.md
+backend/courier-api
+backend/build/courier-api
