@@ -177,6 +177,15 @@ class AppStrings {
   static const String errorPhoneTooShort = 'Phone number too short (minimum 10 characters including country code)';
   static const String errorPhoneTooLong = 'Phone number too long (maximum 20 characters including country code)';
 
+  // Validation - User
+  static const String errorFirstNameEmpty = 'First name cannot be empty';
+  static const String errorLastNameEmpty = 'Last name cannot be empty';
+  static const String errorFirstNameTooShort = 'First name must be at least 2 characters';
+  static const String errorLastNameTooShort = 'Last name must be at least 2 characters';
+  static const String errorFirstNameTooLong = 'First name must not exceed 50 characters';
+  static const String errorLastNameTooLong = 'Last name must not exceed 50 characters';
+  static const String errorInvalidUserStatus = 'Invalid user status: {status}';
+
   // Error Codes (for mapping backend error codes)
   static const String errorCodeValidation = 'VALIDATION_ERROR';
   static const String errorCodeUnauthorized = 'UNAUTHORIZED';
