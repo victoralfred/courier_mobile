@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import 'package:uuid/uuid.dart';
+import 'package:delivery_app/core/constants/app_strings.dart';
 
 /// Value object representing a unique entity identifier (UUID)
 class EntityID extends Equatable {
@@ -16,7 +17,7 @@ class EntityID extends Equatable {
   /// Validates and normalizes the UUID string
   static String _validate(String id) {
     if (id.isEmpty) {
-      throw ArgumentError('EntityID cannot be empty');
+      throw ArgumentError(AppStrings.errorEntityIdEmpty);
     }
 
     // Normalize to lowercase
@@ -28,7 +29,9 @@ class EntityID extends Equatable {
     );
 
     if (!uuidRegex.hasMatch(normalized)) {
-      throw ArgumentError('Invalid UUID format: $id');
+      throw ArgumentError(
+        AppStrings.format(AppStrings.errorInvalidUuidFormat, {'id': id}),
+      );
     }
 
     return normalized;

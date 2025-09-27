@@ -1,4 +1,5 @@
 import 'package:equatable/equatable.dart';
+import 'package:delivery_app/core/constants/app_strings.dart';
 
 /// Value object representing a validated email address
 class Email extends Equatable {
@@ -10,13 +11,13 @@ class Email extends Equatable {
   /// Validates and normalizes the email string
   static String _validate(String email) {
     if (email.isEmpty) {
-      throw ArgumentError('Email cannot be empty');
+      throw ArgumentError(AppStrings.errorEmailEmpty);
     }
 
     // Trim whitespace
     final trimmed = email.trim();
     if (trimmed.isEmpty) {
-      throw ArgumentError('Email cannot be empty or whitespace');
+      throw ArgumentError(AppStrings.errorEmailWhitespace);
     }
 
     // Normalize to lowercase
@@ -28,16 +29,18 @@ class Email extends Equatable {
     );
 
     if (!emailRegex.hasMatch(normalized)) {
-      throw ArgumentError('Invalid email format: $email');
+      throw ArgumentError(
+        AppStrings.format(AppStrings.errorInvalidEmailFormat, {'email': email}),
+      );
     }
 
     // Additional validation checks
     if (normalized.contains('..')) {
-      throw ArgumentError('Email cannot contain consecutive dots');
+      throw ArgumentError(AppStrings.errorEmailConsecutiveDots);
     }
 
     if (normalized.endsWith('.')) {
-      throw ArgumentError('Email cannot end with a dot');
+      throw ArgumentError(AppStrings.errorEmailEndsWithDot);
     }
 
     return normalized;

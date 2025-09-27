@@ -48,7 +48,6 @@ class AppStrings {
   static const String errorCheckInput =
       'Please check your input and try again.';
   static const String errorFieldRequired = 'This field is required';
-  static const String errorInvalidEmailFormat = 'Invalid email format';
   static const String errorInvalidPhoneFormat = 'Invalid phone number format';
   static const String errorPasswordTooShort =
       'Password must be at least 8 characters';
@@ -159,6 +158,24 @@ class AppStrings {
   static const String paymentBankTransfer = 'Bank Transfer';
   static const String paymentWallet = 'Digital Wallet';
   static const String paymentCash = 'Cash';
+
+  // Validation - Entity ID
+  static const String errorEntityIdEmpty = 'EntityID cannot be empty';
+  static const String errorInvalidUuidFormat = 'Invalid UUID format: {id}';
+
+  // Validation - Email
+  static const String errorEmailEmpty = 'Email cannot be empty';
+  static const String errorEmailWhitespace = 'Email cannot be empty or whitespace';
+  static const String errorInvalidEmailFormat = 'Invalid email format: {email}';
+  static const String errorEmailConsecutiveDots = 'Email cannot contain consecutive dots';
+  static const String errorEmailEndsWithDot = 'Email cannot end with a dot';
+
+  // Validation - Phone Number
+  static const String errorPhoneEmpty = 'Phone number cannot be empty';
+  static const String errorPhoneMissingCountryCode = 'Phone number must include country code (start with +)';
+  static const String errorPhoneInvalidChars = 'Phone number must contain only digits after country code';
+  static const String errorPhoneTooShort = 'Phone number too short (minimum 10 characters including country code)';
+  static const String errorPhoneTooLong = 'Phone number too long (maximum 20 characters including country code)';
 
   // Error Codes (for mapping backend error codes)
   static const String errorCodeValidation = 'VALIDATION_ERROR';
