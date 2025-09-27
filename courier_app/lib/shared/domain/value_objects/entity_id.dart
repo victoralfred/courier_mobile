@@ -10,9 +10,7 @@ class EntityID extends Equatable {
   EntityID(String id) : value = _validate(id);
 
   /// Generates a new random UUID
-  factory EntityID.generate() {
-    return EntityID(const Uuid().v4());
-  }
+  factory EntityID.generate() => EntityID(const Uuid().v4());
 
   /// Validates and normalizes the UUID string
   static String _validate(String id) {
