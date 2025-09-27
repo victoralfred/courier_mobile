@@ -125,7 +125,29 @@ void main() {
     });
 
     group('formatting', () {
-      test('should format US phone number', () {
+      test('should format Nigerian mobile phone number', () {
+        // Arrange
+        final phone = PhoneNumber('+2348031234567');
+
+        // Act
+        final formatted = phone.formatInternational();
+
+        // Assert
+        expect(formatted, equals('+234 803 123 4567'));
+      });
+
+      test('should format Nigerian landline phone number', () {
+        // Arrange
+        final phone = PhoneNumber('+23412345678');
+
+        // Act
+        final formatted = phone.formatInternational();
+
+        // Assert
+        expect(formatted, equals('+234 12 3456 78'));
+      });
+
+      test('should format international number with generic pattern', () {
         // Arrange
         final phone = PhoneNumber('+12345678901');
 
@@ -133,12 +155,12 @@ void main() {
         final formatted = phone.formatInternational();
 
         // Assert
-        expect(formatted, equals('+1 234 567 8901'));
+        expect(formatted, equals('+1 234 567 890 1'));
       });
 
       test('should return raw format', () {
         // Arrange
-        const rawPhone = '+12345678901';
+        const rawPhone = '+2348031234567';
         final phone = PhoneNumber(rawPhone);
 
         // Act
@@ -152,7 +174,7 @@ void main() {
     group('equality', () {
       test('should be equal for same phone number value', () {
         // Arrange
-        const phoneString = '+12345678901';
+        const phoneString = '+2348031234567';
         final phone1 = PhoneNumber(phoneString);
         final phone2 = PhoneNumber(phoneString);
 
@@ -163,8 +185,8 @@ void main() {
 
       test('should be equal for same phone with different formatting', () {
         // Arrange
-        final phone1 = PhoneNumber('+1 234-567-8901');
-        final phone2 = PhoneNumber('+12345678901');
+        final phone1 = PhoneNumber('+234 803-123-4567');
+        final phone2 = PhoneNumber('+2348031234567');
 
         // Assert
         expect(phone1, equals(phone2));
@@ -173,8 +195,8 @@ void main() {
 
       test('should not be equal for different phone numbers', () {
         // Arrange
-        final phone1 = PhoneNumber('+12345678901');
-        final phone2 = PhoneNumber('+12345678902');
+        final phone1 = PhoneNumber('+2348031234567');
+        final phone2 = PhoneNumber('+2348031234568');
 
         // Assert
         expect(phone1, isNot(equals(phone2)));
@@ -184,7 +206,7 @@ void main() {
     group('string representation', () {
       test('should return phone number value as string', () {
         // Arrange
-        const phoneString = '+12345678901';
+        const phoneString = '+2348031234567';
         final phone = PhoneNumber(phoneString);
 
         // Act

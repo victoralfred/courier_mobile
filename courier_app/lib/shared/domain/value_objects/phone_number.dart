@@ -33,8 +33,9 @@ class PhoneNumber extends Equatable {
       throw ArgumentError(AppStrings.errorPhoneInvalidChars);
     }
 
-    // Check length constraints (min 10, max 20 total chars including +)
-    if (normalized.length < 10) {
+    // Check length constraints (min 10 digits after +, max 20 total chars)
+    // The minimum of 10 digits is for the actual phone number (not including +)
+    if (withoutPlus.length < 10) {
       throw ArgumentError(AppStrings.errorPhoneTooShort);
     }
 
@@ -101,19 +102,47 @@ class PhoneNumber extends Equatable {
     final cc = countryCode;
     final withoutCountryCode = value.substring(1 + cc.length);
 
-    // Basic formatting - insert spaces every 3-4 digits
+    // Format based on Nigerian phone number pattern
+    // Nigerian numbers: +234 XXX XXX XXXX (for 10 digits after country code)
+    // or +234 XX XXXX XXXX (for landlines)
     final buffer = StringBuffer('+$cc');
 
-    // Add space after country code
     if (withoutCountryCode.isNotEmpty) {
       buffer.write(' ');
-    }
 
-    for (int i = 0; i < withoutCountryCode.length; i++) {
-      if (i > 0 && i % 3 == 0) {
+      // For Nigerian numbers (country code 234)
+      if (cc == '234' && withoutCountryCode.length == 10) {
+        // Mobile format: +234 XXX XXX XXXX
+        // Remove leading 0 if present (Nigerian numbers often written as 0803... locally)
+        final digits = withoutCountryCode.startsWith('0')
+            ? withoutCountryCode.substring(1)
+            : withoutCountryCode;
+
+        if (digits.length >= 10) {
+          buffer.write(digits.substring(0, 3));
+          buffer.write(' ');
+          buffer.write(digits.substring(3, 6));
+          buffer.write(' ');
+          buffer.write(digits.substring(6));
+        } else {
+          buffer.write(digits);
+        }
+      } else if (cc == '234' && (withoutCountryCode.length == 8 || withoutCountryCode.length == 9)) {
+        // Landline format: +234 XX XXXX XX(XX)
+        buffer.write(withoutCountryCode.substring(0, 2));
         buffer.write(' ');
+        buffer.write(withoutCountryCode.substring(2, 6));
+        buffer.write(' ');
+        buffer.write(withoutCountryCode.substring(6));
+      } else {
+        // For other numbers, use groups of 3
+        for (int i = 0; i < withoutCountryCode.length; i++) {
+          if (i > 0 && i % 3 == 0) {
+            buffer.write(' ');
+          }
+          buffer.write(withoutCountryCode[i]);
+        }
       }
-      buffer.write(withoutCountryCode[i]);
     }
 
     return buffer.toString();
