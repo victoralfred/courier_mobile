@@ -1,0 +1,46 @@
+# Flutter/Dart/Pub related
+.dart_tool/
+.packages
+.pub-cache/
+.pub/
+
+# Generated files
+build/
+coverage/
+*.g.dart
+*.mocks.dart
+
+# iOS/Android build outputs
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+ios/ServiceDefinitions.json
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# IDE files
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+
+# macOS
+macos/Flutter/GeneratedPluginRegistrant.swift
+
+# Web
+web/.dart_tool/
+web/build/
+
+# Windows
+windows/flutter/generated_plugin_registrant.cc
+
+# Linux
+linux/flutter/generated_plugin_registrant.cc
+
+# Misc
+*.log
+*.lock
+*.md
