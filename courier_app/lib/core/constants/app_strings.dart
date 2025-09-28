@@ -58,6 +58,18 @@ class AppStrings {
   static const String errorCacheNotFound = 'Cache not found for key: {key}';
   static const String errorCacheFailed = 'Failed to {operation}: {error}';
 
+  // Error Messages - Token Management
+  static const String errorTokenNotFound = 'No authentication token found';
+  static const String errorNoRefreshToken = 'No refresh token available';
+  static const String errorInvalidRefreshToken =
+      'Invalid or expired refresh token';
+  static const String errorCsrfTokenFailed = 'Failed to obtain CSRF token';
+
+  // Error Codes - Authentication
+  static const String errorCodeNoToken = 'NO_TOKEN';
+  static const String errorCodeSessionExpired = 'SESSION_EXPIRED';
+  static const String errorCodeInvalidToken = 'INVALID_TOKEN';
+
   // Error Messages - Resource
   static const String errorResourceNotFound = 'Resource not found';
   static const String errorPageNotFound = 'Page not found';
@@ -239,7 +251,6 @@ class AppStrings {
   static const String errorCodeNoConnection = 'NO_CONNECTION';
   static const String errorCodeServerError = 'SERVER_ERROR';
   static const String errorCodeUnknown = 'UNKNOWN_ERROR';
-  static const String errorCodeSessionExpired = 'SESSION_EXPIRED';
   static const String errorCodeInvalidCredentials = 'INVALID_CREDENTIALS';
   static const String errorCodeNetworkError = 'NETWORK_ERROR';
   static const String errorCodeCacheError = 'CACHE_ERROR';
@@ -319,7 +330,8 @@ class AppStrings {
 
   // OAuth2 Technical Constants
   static const String oauthStoragePrefixAuthRequest = 'oauth_auth_request_';
-  static const String oauthStoragePrefixLinkedProviders = 'oauth_linked_providers_';
+  static const String oauthStoragePrefixLinkedProviders =
+      'oauth_linked_providers_';
   static const String oauthStoragePrefixTokenCache = 'oauth_token_cache_';
   static const String oauthStorageKeyRequestIndex = 'oauth_request_index';
 
@@ -330,8 +342,10 @@ class AppStrings {
   static const String oauthProviderDisplayApple = 'Apple';
 
   // OAuth2 URL Schemes
-  static const String oauthUrlSchemeBaseDev = 'com.courier.delivery.dev://oauth/';
-  static const String oauthUrlSchemeBaseStaging = 'com.courier.delivery.staging://oauth/';
+  static const String oauthUrlSchemeBaseDev =
+      'com.courier.delivery.dev://oauth/';
+  static const String oauthUrlSchemeBaseStaging =
+      'com.courier.delivery.staging://oauth/';
   static const String oauthUrlSchemeBaseProd = 'com.courier.delivery://oauth/';
   static const String oauthUrlSchemeCallback = '/callback';
 
@@ -380,10 +394,14 @@ class AppStrings {
   static const String oauthFieldMax = 'max';
 
   // OAuth2 Warning Messages
-  static const String warningOAuthDeleteAuthRequest = 'Warning: Failed to delete authorization request: ';
-  static const String warningOAuthCleanupExpired = 'Warning: Failed to cleanup expired requests: ';
-  static const String warningOAuthUpdateIndex = 'Warning: Failed to update request index: ';
-  static const String warningOAuthTokenRevocation = 'Token revocation warning: ';
+  static const String warningOAuthDeleteAuthRequest =
+      'Warning: Failed to delete authorization request: ';
+  static const String warningOAuthCleanupExpired =
+      'Warning: Failed to cleanup expired requests: ';
+  static const String warningOAuthUpdateIndex =
+      'Warning: Failed to update request index: ';
+  static const String warningOAuthTokenRevocation =
+      'Token revocation warning: ';
 
   // OAuth2 Cache Operation Names
   static const String oauthOpStoreAuthRequest = 'store authorization request';
@@ -397,14 +415,17 @@ class AppStrings {
   static const String authorizationBearer = 'Bearer ';
 
   // OAuth2 Error Codes
-  static const String oauthErrorCodeTokenExchangeFailed = 'OAUTH_TOKEN_EXCHANGE_FAILED';
+  static const String oauthErrorCodeTokenExchangeFailed =
+      'OAUTH_TOKEN_EXCHANGE_FAILED';
 
   // OAuth2 Configuration Validation
   static const String oauthConfigValidationPrefix = 'YOUR_';
-  static const String oauthMissingConfigMessage = 'OAuth client ID for %s is not configured. Please set the appropriate environment variable or use a .env file.';
+  static const String oauthMissingConfigMessage =
+      'OAuth client ID for %s is not configured. Please set the appropriate environment variable or use a .env file.';
 
   // PKCE Character Set
-  static const String pkceUnreservedChars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
+  static const String pkceUnreservedChars =
+      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';
 
   // Utility method to replace placeholders in strings
   static String format(String template, Map<String, String> values) {

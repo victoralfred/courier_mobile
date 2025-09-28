@@ -117,6 +117,13 @@ class UnknownFailure extends Failure {
   });
 }
 
+/// Failure when an unexpected error occurs
+class UnexpectedFailure extends Failure {
+  const UnexpectedFailure({
+    super.message = AppStrings.errorUnexpected,
+  });
+}
+
 /// Failure when action requires internet but device is offline
 class OfflineFailure extends Failure {
   const OfflineFailure({
