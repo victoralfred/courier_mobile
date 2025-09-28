@@ -5,9 +5,11 @@ import 'package:delivery_app/core/error/failures.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:delivery_app/features/auth/data/services/biometric_service.dart';
+import 'package:delivery_app/features/auth/data/services/user_storage_service.dart';
 import 'package:delivery_app/features/auth/domain/entities/user.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 
 /// TODO Implementation of the AuthRepository interface
@@ -16,12 +18,18 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
   final BiometricService biometricService;
+  late final UserStorageService _userStorageService;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.biometricService,
-  });
+    FlutterSecureStorage? secureStorage,
+  }) {
+    _userStorageService = UserStorageService(
+      secureStorage: secureStorage ?? const FlutterSecureStorage(),
+    );
+  }
 
   @override
   Future<Either<Failure, User>> login({
@@ -37,6 +45,9 @@ class AuthRepositoryImpl implements AuthRepository {
 
       // Cache the user locally
       await localDataSource.cacheUser(userModel);
+
+      // Persist user data with role to secure storage
+      await _userStorageService.saveUser(userModel);
 
       // Save tokens (assuming they're returned in the user model or headers)
       // This would typically be handled by an interceptor in the API client
@@ -77,6 +88,9 @@ class AuthRepositoryImpl implements AuthRepository {
       // Cache the user locally
       await localDataSource.cacheUser(userModel);
 
+      // Persist user data with role to secure storage
+      await _userStorageService.saveUser(userModel);
+
       return Right(userModel);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -93,17 +107,34 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User>> getCurrentUser() async {
     try {
-      // Try to get cached user first
+      // Check if session is still valid
+      if (await _userStorageService.isSessionExpired()) {
+        // Session expired, clear data and require re-authentication
+        await _userStorageService.clearUserData();
+        return const Left(
+            AuthenticationFailure(message: AppStrings.errorSessionExpired));
+      }
+
+      // Try to get user from persistent storage first
+      final persistedUser = await _userStorageService.getCachedUser();
+      if (persistedUser != null) {
+        return Right(persistedUser);
+      }
+
+      // Then try local cache
       final cachedUser = await localDataSource.getCachedUser();
       if (cachedUser != null) {
+        // Save to persistent storage for next time
+        await _userStorageService.saveUser(cachedUser);
         return Right(cachedUser);
       }
 
       // If no cached user, fetch from remote
       final userModel = await remoteDataSource.getCurrentUser();
 
-      // Cache the user
+      // Cache the user both locally and persistently
       await localDataSource.cacheUser(userModel);
+      await _userStorageService.saveUser(userModel);
 
       return Right(userModel);
     } on ServerException catch (e) {
@@ -130,6 +161,9 @@ class AuthRepositoryImpl implements AuthRepository {
       // Clear local tokens and cached user
       await localDataSource.clearTokens();
       await localDataSource.clearCachedUser();
+
+      // Clear persisted user data
+      await _userStorageService.clearUserData();
 
       // Optionally call remote logout endpoint if available
       // await remoteDataSource.logout();

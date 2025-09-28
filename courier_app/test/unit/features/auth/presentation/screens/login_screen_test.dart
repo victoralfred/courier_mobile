@@ -15,6 +15,8 @@ import 'package:delivery_app/shared/domain/value_objects/email.dart';
 import 'package:delivery_app/shared/domain/value_objects/phone_number.dart';
 import 'package:delivery_app/shared/domain/value_objects/entity_id.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
+import 'package:go_router/go_router.dart';
+import 'package:delivery_app/core/routing/route_names.dart';
 
 @GenerateMocks([LoginBloc])
 import 'login_screen_test.mocks.dart';
@@ -203,7 +205,21 @@ void main() {
     });
 
     testWidgets('should navigate to home when login succeeds', (WidgetTester tester) async {
-      final navigatorKey = GlobalKey<NavigatorState>();
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => BlocProvider<LoginBloc>.value(
+              value: mockLoginBloc,
+              child: const LoginScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.customerHome,
+            builder: (context, state) => const Scaffold(body: Text('Home')),
+          ),
+        ],
+      );
 
       when(mockLoginBloc.stream).thenAnswer(
         (_) => Stream.fromIterable([
@@ -219,15 +235,8 @@ void main() {
       ));
 
       await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navigatorKey,
-          home: BlocProvider<LoginBloc>.value(
-            value: mockLoginBloc,
-            child: const LoginScreen(),
-          ),
-          routes: {
-            '/home': (context) => const Scaffold(body: Text('Home')),
-          },
+        MaterialApp.router(
+          routerConfig: router,
         ),
       );
 
@@ -312,18 +321,28 @@ void main() {
     });
 
     testWidgets('should navigate to registration screen when sign up is pressed', (WidgetTester tester) async {
-      final navigatorKey = GlobalKey<NavigatorState>();
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => BlocProvider<LoginBloc>.value(
+              value: mockLoginBloc,
+              child: const LoginScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.register,
+            builder: (context, state) => Scaffold(
+              appBar: AppBar(title: const Text('Register')),
+              body: const Text('Registration Page'),
+            ),
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navigatorKey,
-          home: BlocProvider<LoginBloc>.value(
-            value: mockLoginBloc,
-            child: const LoginScreen(),
-          ),
-          routes: {
-            '/register': (context) => const Scaffold(body: Text('Register')),
-          },
+        MaterialApp.router(
+          routerConfig: router,
         ),
       );
 
@@ -339,18 +358,28 @@ void main() {
     });
 
     testWidgets('should navigate to forgot password when link is pressed', (WidgetTester tester) async {
-      final navigatorKey = GlobalKey<NavigatorState>();
+      final router = GoRouter(
+        routes: [
+          GoRoute(
+            path: '/',
+            builder: (context, state) => BlocProvider<LoginBloc>.value(
+              value: mockLoginBloc,
+              child: const LoginScreen(),
+            ),
+          ),
+          GoRoute(
+            path: RoutePaths.forgotPassword,
+            builder: (context, state) => Scaffold(
+              appBar: AppBar(title: const Text('Forgot Password')),
+              body: const Text('Password Reset Page'),
+            ),
+          ),
+        ],
+      );
 
       await tester.pumpWidget(
-        MaterialApp(
-          navigatorKey: navigatorKey,
-          home: BlocProvider<LoginBloc>.value(
-            value: mockLoginBloc,
-            child: const LoginScreen(),
-          ),
-          routes: {
-            '/forgot-password': (context) => const Scaffold(body: Text('Forgot Password')),
-          },
+        MaterialApp.router(
+          routerConfig: router,
         ),
       );
 

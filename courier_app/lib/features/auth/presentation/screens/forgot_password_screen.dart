@@ -7,7 +7,7 @@ class ForgotPasswordScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Scaffold(
         appBar: AppBar(
-          title: const Text('Reset Password'),
+          title: const Text('Forgot Password'),
         ),
         body: Padding(
           padding: const EdgeInsets.all(24.0),
@@ -22,7 +22,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               const Text(
-                'Forgot your password?',
+                AppStrings.forgotPasswordQuestion,
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -31,7 +31,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               const Text(
-                'Enter your email address and we\'ll send you a link to reset your password.',
+                AppStrings.forgotPasswordDescription,
                 style: TextStyle(
                   fontSize: 16,
                   color: Colors.grey,
@@ -54,7 +54,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                   onPressed: () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Password reset link sent to your email'),
+                        content: Text(AppStrings.passwordResetLinkSent),
                       ),
                     );
                   },
@@ -64,7 +64,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                     ),
                   ),
                   child: const Text(
-                    'Send Reset Link',
+                    AppStrings.sendResetLink,
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
@@ -74,7 +74,7 @@ class ForgotPasswordScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                child: const Text('Back to Login'),
+                child: const Text(AppStrings.backToLogin),
               ),
             ],
           ),

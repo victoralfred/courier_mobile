@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
+import 'package:delivery_app/core/routing/route_names.dart';
+import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_bloc.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_event.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_state.dart';
 
 class LoginScreen extends StatelessWidget {
-  const LoginScreen({super.key});
+  final String? redirectPath;
+
+  const LoginScreen({super.key, this.redirectPath});
 
   @override
   Widget build(BuildContext context) => Scaffold(
@@ -23,11 +28,23 @@ class LoginScreen extends StatelessWidget {
                 );
               } else if (state.status == LoginStatus.success &&
                   state.user != null) {
-                // Navigate based on user role
-                if (state.user!.isDriver) {
-                  Navigator.pushReplacementNamed(context, '/driver-home');
+                // Handle redirect or navigate based on user role
+                if (redirectPath != null && redirectPath!.isNotEmpty) {
+                  context.go(redirectPath!);
                 } else {
-                  Navigator.pushReplacementNamed(context, '/home');
+                  // Navigate based on user role
+                  switch (state.user!.role.type) {
+                    case UserRoleType.customer:
+                      context.go(RoutePaths.customerHome);
+                      break;
+                    case UserRoleType.driver:
+                      if (state.user!.role.permissions.contains('driver.verified')) {
+                        context.go(RoutePaths.driverHome);
+                      } else {
+                        context.go(RoutePaths.driverOnboarding);
+                      }
+                      break;
+                  }
                 }
               }
             },
@@ -150,7 +167,7 @@ class LoginScreen extends StatelessWidget {
         alignment: Alignment.centerRight,
         child: TextButton(
           onPressed: () {
-            Navigator.pushNamed(context, '/forgot-password');
+            context.push(RoutePaths.forgotPassword);
           },
           child: const Text(AppStrings.forgotPassword),
         ),
@@ -251,7 +268,7 @@ class LoginScreen extends StatelessWidget {
           const Text(AppStrings.signUpPrompt),
           TextButton(
             onPressed: () {
-              Navigator.pushNamed(context, '/register');
+              context.push(RoutePaths.register);
             },
             child: const Text(AppStrings.signUp),
           ),

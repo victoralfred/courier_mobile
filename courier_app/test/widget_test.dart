@@ -3,53 +3,39 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
-import 'package:delivery_app/app.dart';
-import 'package:delivery_app/core/config/app_config.dart';
-import 'package:delivery_app/core/config/environment.dart';
+import 'package:delivery_app/core/routing/splash_screen.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
-import 'package:delivery_app/features/auth/presentation/blocs/login/login_bloc.dart';
-import 'package:delivery_app/features/auth/presentation/blocs/login/login_state.dart';
+import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 
-@GenerateMocks([LoginBloc])
+@GenerateMocks([AuthRepository])
 import 'widget_test.mocks.dart';
 
 void main() {
-  late MockLoginBloc mockLoginBloc;
+  late MockAuthRepository mockAuthRepository;
 
   setUp(() {
-    mockLoginBloc = MockLoginBloc();
-    when(mockLoginBloc.state).thenReturn(const LoginState());
-    when(mockLoginBloc.stream).thenAnswer((_) => Stream.value(const LoginState()));
+    mockAuthRepository = MockAuthRepository();
+    when(mockAuthRepository.isAuthenticated()).thenAnswer((_) async => false);
   });
 
-  testWidgets('CourierApp displays correctly', (WidgetTester tester) async {
-    // Set up the environment for testing
-    AppConfig.setEnvironment(Environment.development);
+  testWidgets('SplashScreen displays correctly', (WidgetTester tester) async {
+    // Disable automatic timer execution
+    await tester.runAsync(() async {
+      // Build just the splash screen widget with mocked AuthRepository
+      await tester.pumpWidget(
+        MaterialApp(
+          home: RepositoryProvider<AuthRepository>.value(
+            value: mockAuthRepository,
+            child: const SplashScreen(),
+          ),
+        ),
+      );
+    });
 
-    // Build our app with mocked LoginBloc
-    await tester.pumpWidget(
-      BlocProvider<LoginBloc>.value(
-        value: mockLoginBloc,
-        child: const CourierApp(),
-      ),
-    );
-
-    // Wait for any animations to complete
-    await tester.pumpAndSettle();
-
-    // Verify that the login screen is displayed with app title
-    expect(find.text(AppStrings.loginTitle), findsOneWidget);
-
-    // Verify the shipping icon is displayed
-    expect(find.byIcon(Icons.local_shipping), findsOneWidget);
-
-    // Verify email field is present
-    expect(find.text(AppStrings.emailLabel), findsOneWidget);
-
-    // Verify password field is present
-    expect(find.text(AppStrings.passwordLabel), findsOneWidget);
-
-    // Verify login button is present
-    expect(find.text(AppStrings.loginButton), findsOneWidget);
+    // Verify splash screen displays the correct elements immediately
+    expect(find.text(AppStrings.appName), findsOneWidget);
+    expect(find.text(AppStrings.appTagline), findsOneWidget);
+    expect(find.byIcon(Icons.local_shipping_rounded), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }

@@ -470,6 +470,12 @@ class AppStrings {
   static const String passwordLabel = 'Password';
   static const String loginButton = 'Login';
   static const String forgotPassword = 'Forgot Password?';
+  static const String resetPasswordTitle = 'Reset Password';
+  static const String forgotPasswordQuestion = 'Forgot your password?';
+  static const String forgotPasswordDescription = 'Enter your email address and we\'ll send you a link to reset your password.';
+  static const String sendResetLink = 'Send Reset Link';
+  static const String passwordResetLinkSent = 'Password reset link sent to your email';
+  static const String backToLogin = 'Back to Login';
   static const String signUpPrompt = "Don't have an account? ";
   static const String signUp = 'Sign Up';
   static const String loginWithGoogle = 'Continue with Google';
@@ -554,4 +560,8 @@ class AppStrings {
   static const String validationPasswordRequired = 'Password is required';
   static const String validationPasswordTooShort =
       'Password must be at least 8 characters';
+
+  // App Info
+  static const String appName = 'Courier App';
+  static const String appTagline = 'Deliver with confidence';
 }

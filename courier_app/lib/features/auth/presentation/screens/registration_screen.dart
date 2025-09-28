@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
+import 'package:delivery_app/core/routing/route_names.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/registration/registration_bloc.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/registration/registration_event.dart';
@@ -33,10 +35,19 @@ class RegistrationScreen extends StatelessWidget {
                   ),
                 );
                 // Navigate to appropriate home based on role
-                if (state.user?.isDriver ?? false) {
-                  Navigator.pushReplacementNamed(context, '/driver-home');
+                if (state.user != null) {
+                  switch (state.user!.role.type) {
+                    case UserRoleType.customer:
+                      context.go(RoutePaths.customerHome);
+                      break;
+                    case UserRoleType.driver:
+                      // New drivers need onboarding
+                      context.go(RoutePaths.driverOnboarding);
+                      break;
+                  }
                 } else {
-                  Navigator.pushReplacementNamed(context, '/home');
+                  // Fallback to login if no user
+                  context.go(RoutePaths.login);
                 }
               }
             },
