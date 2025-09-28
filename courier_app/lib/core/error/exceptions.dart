@@ -139,3 +139,12 @@ class UnknownException extends AppException {
     super.details,
   });
 }
+
+/// Exception thrown when configuration is missing or invalid
+class ConfigurationException extends AppException {
+  const ConfigurationException({
+    required super.message,
+    super.code = 'CONFIG_ERROR',
+    super.details,
+  });
+}

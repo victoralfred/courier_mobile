@@ -123,3 +123,33 @@ class OfflineFailure extends Failure {
     super.message = AppStrings.errorOfflineAction,
   });
 }
+
+/// OAuth-specific failure
+class OAuthFailure extends Failure {
+  final String? provider;
+  final String? errorCode;
+
+  const OAuthFailure(
+    String message, {
+    this.provider,
+    this.errorCode,
+  }) : super(message: message);
+
+  @override
+  List<Object?> get props => [message, provider, errorCode];
+}
+
+/// Failure when PKCE verification fails
+class PKCEFailure extends Failure {
+  const PKCEFailure(String message) : super(message: message);
+}
+
+/// Failure when OAuth state validation fails
+class OAuthStateFailure extends Failure {
+  const OAuthStateFailure(String message) : super(message: message);
+}
+
+/// Failure when OAuth authorization code expires
+class OAuthCodeExpiredFailure extends Failure {
+  const OAuthCodeExpiredFailure(String message) : super(message: message);
+}
