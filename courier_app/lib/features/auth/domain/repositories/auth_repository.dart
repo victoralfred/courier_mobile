@@ -78,4 +78,20 @@ abstract class AuthRepository {
     required String currentPassword,
     required String newPassword,
   });
+
+  /// Authenticates using biometric credentials
+  /// Returns [User] on success or [Failure] on error
+  Future<Either<Failure, User>> loginWithBiometric();
+
+  /// Enables biometric authentication for the current user
+  /// Returns [bool] on success or [Failure] on error
+  Future<Either<Failure, bool>> enableBiometric();
+
+  /// Disables biometric authentication for the current user
+  /// Returns [bool] on success or [Failure] on error
+  Future<Either<Failure, bool>> disableBiometric();
+
+  /// Checks if biometric authentication is enabled for current user
+  /// Returns true if enabled, false otherwise
+  Future<bool> isBiometricEnabled();
 }

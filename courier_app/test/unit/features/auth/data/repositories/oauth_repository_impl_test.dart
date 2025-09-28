@@ -11,6 +11,7 @@ import 'package:delivery_app/features/auth/domain/entities/pkce_challenge.dart';
 import 'package:delivery_app/features/auth/domain/entities/token_response.dart';
 import 'package:delivery_app/features/auth/domain/entities/user.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_status.dart';
+import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/shared/domain/value_objects/email.dart';
 import 'package:delivery_app/shared/domain/value_objects/entity_id.dart';
 import 'package:delivery_app/shared/domain/value_objects/phone_number.dart';
@@ -73,6 +74,8 @@ void main() {
     email: Email('john.doe@example.com'),
     phone: PhoneNumber('+2341234567890'),
     status: UserStatus.active,
+    role: UserRole.customer(),
+    customerData: const CustomerData(),
     createdAt: DateTime.now(),
     updatedAt: DateTime.now(),
   );

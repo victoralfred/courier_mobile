@@ -4,6 +4,7 @@ import 'package:delivery_app/shared/domain/value_objects/entity_id.dart';
 import 'package:delivery_app/shared/domain/value_objects/email.dart';
 import 'package:delivery_app/shared/domain/value_objects/phone_number.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_status.dart';
+import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 
 /// User domain entity representing an authenticated user
 class User extends Equatable {
@@ -13,6 +14,9 @@ class User extends Equatable {
   final Email email;
   final PhoneNumber phone;
   final UserStatus status;
+  final UserRole role;
+  final DriverData? driverData;
+  final CustomerData? customerData;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -24,10 +28,21 @@ class User extends Equatable {
     required this.email,
     required this.phone,
     required this.status,
+    required this.role,
+    this.driverData,
+    this.customerData,
     required this.createdAt,
     required this.updatedAt,
   })  : firstName = _validateFirstName(firstName),
-        lastName = _validateLastName(lastName);
+        lastName = _validateLastName(lastName) {
+    // Validate role-specific data
+    if (role.type == UserRoleType.driver && driverData == null) {
+      throw ArgumentError(AppStrings.errorDriverDataRequired);
+    }
+    if (role.type == UserRoleType.customer && customerData == null) {
+      throw ArgumentError(AppStrings.errorCustomerDataRequired);
+    }
+  }
 
   /// Validates first name according to business rules
   static String _validateFirstName(String firstName) {
@@ -71,6 +86,18 @@ class User extends Equatable {
   /// Check if the user account is active
   bool get isActive => status == UserStatus.active;
 
+  /// Check if the user is a driver
+  bool get isDriver => role.type == UserRoleType.driver;
+
+  /// Check if the user is a customer
+  bool get isCustomer => role.type == UserRoleType.customer;
+
+  /// Check if the driver is available (for drivers only)
+  bool get isAvailable => isDriver && driverData?.isAvailable == true;
+
+  /// Check if the user has a specific permission
+  bool hasPermission(String permission) => role.hasPermission(permission);
+
   /// Creates a copy of this user with the specified fields replaced
   User copyWith({
     EntityID? id,
@@ -79,6 +106,9 @@ class User extends Equatable {
     Email? email,
     PhoneNumber? phone,
     UserStatus? status,
+    UserRole? role,
+    DriverData? driverData,
+    CustomerData? customerData,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) =>
@@ -89,6 +119,9 @@ class User extends Equatable {
         email: email ?? this.email,
         phone: phone ?? this.phone,
         status: status ?? this.status,
+        role: role ?? this.role,
+        driverData: driverData ?? this.driverData,
+        customerData: customerData ?? this.customerData,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? DateTime.now(), // Always update the timestamp
       );
@@ -98,5 +131,5 @@ class User extends Equatable {
 
   @override
   String toString() =>
-      'User(id: $id, name: $fullName, email: $email, status: $status)';
+      'User(id: $id, name: $fullName, email: $email, role: ${role.type}, status: $status)';
 }

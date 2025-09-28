@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:delivery_app/features/auth/domain/entities/user.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_status.dart';
+import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/shared/domain/value_objects/entity_id.dart';
 import 'package:delivery_app/shared/domain/value_objects/email.dart';
 import 'package:delivery_app/shared/domain/value_objects/phone_number.dart';
@@ -27,6 +28,8 @@ void main() {
           email: email,
           phone: phone,
           status: status,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: createdAt,
           updatedAt: updatedAt,
         );
@@ -59,7 +62,9 @@ void main() {
             email: email,
             phone: phone,
             status: UserStatus.active,
-            createdAt: DateTime.now(),
+            role: UserRole.customer(),
+          customerData: const CustomerData(),
+          createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),
           throwsA(isA<ArgumentError>()),
@@ -83,7 +88,9 @@ void main() {
             email: email,
             phone: phone,
             status: UserStatus.active,
-            createdAt: DateTime.now(),
+            role: UserRole.customer(),
+          customerData: const CustomerData(),
+          createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),
           throwsA(isA<ArgumentError>()),
@@ -107,7 +114,9 @@ void main() {
             email: email,
             phone: phone,
             status: UserStatus.active,
-            createdAt: DateTime.now(),
+            role: UserRole.customer(),
+          customerData: const CustomerData(),
+          createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),
           throwsA(isA<ArgumentError>()),
@@ -131,7 +140,9 @@ void main() {
             email: email,
             phone: phone,
             status: UserStatus.active,
-            createdAt: DateTime.now(),
+            role: UserRole.customer(),
+          customerData: const CustomerData(),
+          createdAt: DateTime.now(),
             updatedAt: DateTime.now(),
           ),
           throwsA(isA<ArgumentError>()),
@@ -149,6 +160,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -171,6 +184,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -191,6 +206,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.inactive,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -214,6 +231,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -225,6 +244,8 @@ void main() {
           email: Email('jane.smith@example.com'),
           phone: PhoneNumber('+2348039876543'),
           status: UserStatus.inactive,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now().subtract(const Duration(days: 1)),
           updatedAt: DateTime.now().subtract(const Duration(hours: 1)),
         );
@@ -243,6 +264,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -254,6 +277,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -273,6 +298,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );
@@ -301,6 +328,8 @@ void main() {
           email: Email('john.doe@example.com'),
           phone: PhoneNumber('+2348031234567'),
           status: UserStatus.active,
+          role: UserRole.customer(),
+          customerData: const CustomerData(),
           createdAt: DateTime.now(),
           updatedAt: DateTime.now(),
         );

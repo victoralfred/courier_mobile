@@ -48,9 +48,13 @@ class AppStrings {
   static const String errorCheckInput =
       'Please check your input and try again.';
   static const String errorFieldRequired = 'This field is required';
-  static const String errorInvalidPhoneFormat = 'Invalid phone number format';
+  static const String errorInvalidEmail = 'Please enter a valid email address';
+  static const String errorPasswordRequired = 'Password is required';
   static const String errorPasswordTooShort =
       'Password must be at least 8 characters';
+  static const String errorBiometricAuthFailed =
+      'Biometric authentication failed';
+  static const String errorInvalidPhoneFormat = 'Invalid phone number format';
 
   // Error Messages - Cache
   static const String errorCacheGeneral = 'Cache error occurred';
@@ -435,4 +439,61 @@ class AppStrings {
     });
     return result;
   }
+
+  // User Role Errors (roles already defined above)
+  static const String errorInvalidUserRole = 'Invalid user role';
+  static const String errorDriverDataRequired = 'Driver data is required for driver role';
+  static const String errorCustomerDataRequired = 'Customer data is required for customer role';
+
+  // Permissions
+  static const String permissionCreateOrder = 'order:create';
+  static const String permissionViewOrder = 'order:view';
+  static const String permissionCancelOrder = 'order:cancel';
+  static const String permissionTrackOrder = 'order:track';
+  static const String permissionAcceptOrder = 'order:accept';
+  static const String permissionRejectOrder = 'order:reject';
+  static const String permissionUpdateOrderStatus = 'order:status:update';
+  static const String permissionRateDriver = 'driver:rate';
+  static const String permissionUpdateLocation = 'location:update';
+  static const String permissionViewEarnings = 'earnings:view';
+  static const String permissionViewProfile = 'profile:view';
+  static const String permissionUpdateProfile = 'profile:update';
+  static const String permissionUpdateAvailability = 'availability:update';
+
+  // Login Screen
+  static const String loginTitle = 'Welcome Back';
+  static const String emailLabel = 'Email';
+  static const String passwordLabel = 'Password';
+  static const String loginButton = 'Login';
+  static const String forgotPassword = 'Forgot Password?';
+  static const String signUpPrompt = "Don't have an account? ";
+  static const String signUp = 'Sign Up';
+  static const String loginWithGoogle = 'Continue with Google';
+  static const String loginWithGithub = 'Continue with GitHub';
+  static const String loginWithMicrosoft = 'Continue with Microsoft';
+  static const String loginWithApple = 'Continue with Apple';
+
+  // Registration Screen
+  static const String registrationTitle = 'Create Account';
+  static const String firstNameLabel = 'First Name';
+  static const String lastNameLabel = 'Last Name';
+  static const String phoneLabel = 'Phone Number';
+  static const String confirmPasswordLabel = 'Confirm Password';
+  static const String selectRoleTitle = 'I want to:';
+  static const String roleCustomerOption = 'Order deliveries';
+  static const String roleDriverOption = 'Deliver packages';
+  static const String termsAndConditions = 'I agree to the Terms and Conditions';
+  static const String registerButton = 'Create Account';
+  static const String alreadyHaveAccount = 'Already have an account? ';
+  static const String signIn = 'Sign In';
+  static const String errorPasswordMismatch = 'Passwords do not match';
+  static const String errorRoleRequired = 'Please select your role';
+  static const String errorTermsRequired = 'You must accept the terms and conditions';
+  static const String errorPhoneInvalid = 'Please enter a valid phone number';
+  static const String errorPasswordWeak = 'Password is too weak';
+  static const String passwordStrengthWeak = 'Weak';
+  static const String passwordStrengthFair = 'Fair';
+  static const String passwordStrengthGood = 'Good';
+  static const String passwordStrengthStrong = 'Strong';
+  static const String registrationSuccess = 'Account created successfully!';
 }

@@ -174,7 +174,7 @@ class OAuthRepositoryImpl implements OAuthRepository {
   ) async {
     try {
       // This would call a backend endpoint to link the OAuth account
-      // For now, we'll fetch the user info and update linked providers
+      // TODO For now, we'll fetch the user info and update linked providers
       final user = await remoteDataSource.fetchUserInfo(
         accessToken: accessToken,
         provider: provider,
@@ -210,7 +210,7 @@ class OAuthRepositoryImpl implements OAuthRepository {
   ) async {
     try {
       // This would call a backend endpoint to unlink the OAuth account
-      // For now, we'll just remove from linked providers list
+      // TODO For now, we'll just remove from linked providers list
       final providers = await localDataSource.getLinkedProviders(userId);
       providers.remove(providerType);
       await localDataSource.storeLinkedProviders(userId, providers);

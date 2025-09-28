@@ -6,6 +6,7 @@ import 'package:delivery_app/features/auth/domain/usecases/login.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:delivery_app/features/auth/domain/entities/user.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_status.dart';
+import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/shared/domain/value_objects/entity_id.dart';
 import 'package:delivery_app/shared/domain/value_objects/email.dart';
 import 'package:delivery_app/shared/domain/value_objects/phone_number.dart';
@@ -30,6 +31,8 @@ void main() {
       email: Email('john.doe@example.com'),
       phone: PhoneNumber('+2348031234567'),
       status: UserStatus.active,
+      role: UserRole.customer(),
+      customerData: const CustomerData(),
       createdAt: DateTime.now(),
       updatedAt: DateTime.now(),
     );
