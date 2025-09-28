@@ -13,6 +13,7 @@ class ApiClient {
   final AppEnvironment _config;
 
   String? _authToken;
+  String? _refreshToken;
   String? _csrfToken;
 
   ApiClient._({
@@ -94,8 +95,11 @@ class ApiClient {
   }
 
   /// Set the authentication token
-  void setAuthToken(String? token) {
+  void setAuthToken(String? token, {String? refreshToken}) {
     _authToken = token;
+    if (refreshToken != null) {
+      _refreshToken = refreshToken;
+    }
   }
 
   /// Set the CSRF token
@@ -106,13 +110,49 @@ class ApiClient {
   /// Clear all tokens
   void clearTokens() {
     _authToken = null;
+    _refreshToken = null;
     _csrfToken = null;
   }
 
   /// Handle token expiration (retry with refresh)
   Future<void> _handleTokenExpired() async {
-    // TODO: Implement token refresh logic
-    // This will be implemented when we add authentication
+    try {
+      // Attempt to refresh the token
+      final refreshToken = _refreshToken;
+      if (refreshToken != null && refreshToken.isNotEmpty) {
+        // Call refresh endpoint
+        final response = await _dio.post(
+          '/auth/refresh',
+          data: {'refresh_token': refreshToken},
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $refreshToken',
+            },
+          ),
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          // Extract new tokens from response
+          final data = response.data as Map<String, dynamic>;
+          final newAccessToken = data['access_token'] as String?;
+          final newRefreshToken = data['refresh_token'] as String?;
+
+          if (newAccessToken != null) {
+            // Update stored tokens
+            _authToken = newAccessToken;
+            if (newRefreshToken != null) {
+              _refreshToken = newRefreshToken;
+            }
+            return; // Successfully refreshed
+          }
+        }
+      }
+    } catch (e) {
+      // Log refresh failure (error reporting service should be used here)
+      debugPrint('Token refresh failed: $e');
+    }
+
+    // If refresh fails, clear tokens and force re-authentication
     clearTokens();
   }
 

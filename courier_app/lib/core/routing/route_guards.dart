@@ -56,8 +56,6 @@ class AuthGuard {
               } else {
                 return RoutePaths.driverOnboarding;
               }
-            default:
-              return RoutePaths.customerHome;
           }
         },
       );
@@ -141,5 +139,4 @@ class RoleGuard {
       },
     );
   }
-
 }

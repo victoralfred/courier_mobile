@@ -91,7 +91,7 @@ class _SplashScreenState extends State<SplashScreen>
                 context.go(RoutePaths.driverOnboarding);
               }
               break;
-                }
+          }
         },
       );
     } else {
@@ -107,14 +107,12 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).primaryColor,
-      body: Center(
-        child: AnimatedBuilder(
-          animation: _animationController,
-          builder: (context, child) {
-            return FadeTransition(
+  Widget build(BuildContext context) => Scaffold(
+        backgroundColor: Theme.of(context).primaryColor,
+        body: Center(
+          child: AnimatedBuilder(
+            animation: _animationController,
+            builder: (context, child) => FadeTransition(
               opacity: _fadeAnimation,
               child: ScaleTransition(
                 scale: _scaleAnimation,
@@ -144,9 +142,9 @@ class _SplashScreenState extends State<SplashScreen>
                     ),
                     const SizedBox(height: 32),
                     // App Name
-                    Text(
+                    const Text(
                       AppStrings.appName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -176,10 +174,8 @@ class _SplashScreenState extends State<SplashScreen>
                   ],
                 ),
               ),
-            );
-          },
+            ),
+          ),
         ),
-      ),
-    );
-  }
+      );
 }

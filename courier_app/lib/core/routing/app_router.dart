@@ -6,6 +6,7 @@ import '../../features/auth/presentation/screens/registration_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/customer/presentation/screens/customer_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
+import '../../features/driver/onboarding/presentation/screens/driver_onboarding_screen.dart';
 import 'route_guards.dart';
 import 'route_names.dart';
 import 'splash_screen.dart';
@@ -197,9 +198,7 @@ class AppRouter {
         GoRoute(
           path: RoutePaths.driverOnboarding,
           name: RouteNames.driverOnboarding,
-          builder: (context, state) => const Scaffold(
-            body: Center(child: Text('Driver Onboarding')),
-          ),
+          builder: (context, state) => const DriverOnboardingScreen(),
           redirect: roleGuard.requireDriverRole,
         ),
         GoRoute(
