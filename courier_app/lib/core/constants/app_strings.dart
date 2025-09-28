@@ -67,6 +67,8 @@ class AppStrings {
   static const String errorNoRefreshToken = 'No refresh token available';
   static const String errorInvalidRefreshToken =
       'Invalid or expired refresh token';
+  static const String errorTokenRefreshFailed =
+      'Failed to refresh authentication token';
   static const String errorCsrfTokenFailed = 'Failed to obtain CSRF token';
 
   // Error Codes - Authentication
@@ -442,8 +444,10 @@ class AppStrings {
 
   // User Role Errors (roles already defined above)
   static const String errorInvalidUserRole = 'Invalid user role';
-  static const String errorDriverDataRequired = 'Driver data is required for driver role';
-  static const String errorCustomerDataRequired = 'Customer data is required for customer role';
+  static const String errorDriverDataRequired =
+      'Driver data is required for driver role';
+  static const String errorCustomerDataRequired =
+      'Customer data is required for customer role';
 
   // Permissions
   static const String permissionCreateOrder = 'order:create';
@@ -482,13 +486,15 @@ class AppStrings {
   static const String selectRoleTitle = 'I want to:';
   static const String roleCustomerOption = 'Order deliveries';
   static const String roleDriverOption = 'Deliver packages';
-  static const String termsAndConditions = 'I agree to the Terms and Conditions';
+  static const String termsAndConditions =
+      'I agree to the Terms and Conditions';
   static const String registerButton = 'Create Account';
   static const String alreadyHaveAccount = 'Already have an account? ';
   static const String signIn = 'Sign In';
   static const String errorPasswordMismatch = 'Passwords do not match';
   static const String errorRoleRequired = 'Please select your role';
-  static const String errorTermsRequired = 'You must accept the terms and conditions';
+  static const String errorTermsRequired =
+      'You must accept the terms and conditions';
   static const String errorPhoneInvalid = 'Please enter a valid phone number';
   static const String errorPasswordWeak = 'Password is too weak';
   static const String passwordStrengthWeak = 'Weak';
@@ -496,4 +502,56 @@ class AppStrings {
   static const String passwordStrengthGood = 'Good';
   static const String passwordStrengthStrong = 'Strong';
   static const String registrationSuccess = 'Account created successfully!';
+
+  // Biometric Authentication
+  static const String biometricTitle = 'Biometric Authentication';
+  static const String biometricAuthReason =
+      'Please authenticate to access your account';
+  static const String biometricEnablePrompt =
+      'Enable biometric authentication for quick access?';
+  static const String biometricDisabled = 'Biometric authentication disabled';
+  static const String biometricEnabled = 'Biometric authentication enabled';
+  static const String biometricNotAvailable =
+      'Biometric authentication not available';
+  static const String biometricNotEnrolled =
+      'No biometric credentials enrolled';
+  static const String biometricLockout = 'Too many attempts. Try again later';
+  static const String biometricFailed = 'Biometric authentication failed';
+  static const String biometricNotEnabled =
+      'Biometric authentication not enabled';
+  static const String biometricNoStoredCredentials =
+      'No stored credentials found';
+  static const String biometricInvalidStoredCredentials =
+      'Invalid stored credentials';
+  static const String biometricLoginFailed = 'Biometric login failed';
+  static const String biometricEnableFailed = 'Failed to enable biometric';
+  static const String biometricDisableFailed = 'Failed to disable biometric';
+
+  // Repository Error Messages
+  static const String errorUserNotAuthenticated = 'User not authenticated';
+  static const String errorRefreshTokenFailed = 'Failed to refresh token';
+  static const String errorNoCsrfToken = 'No CSRF token available';
+  static const String errorGetCsrfTokenFailed = 'Failed to get CSRF token';
+  static const String errorSaveTokensFailed = 'Failed to save tokens';
+  static const String errorClearTokensFailed = 'Failed to clear tokens';
+  static const String errorUpdateProfileFailed = 'Failed to update profile';
+  static const String errorPasswordResetEmailFailed =
+      'Failed to send password reset email';
+  static const String errorVerifyEmailFailed = 'Failed to verify email';
+  static const String errorCurrentPasswordIncorrect =
+      'Current password is incorrect';
+  static const String errorChangePasswordFailed = 'Failed to change password';
+  static const String errorLogoutFailed = 'Failed to logout';
+
+  // Validation Messages
+  static const String validationFirstNameRequired = 'First name is required';
+  static const String validationLastNameRequired = 'Last name is required';
+  static const String validationEmailRequired = 'Email is required';
+  static const String validationInvalidEmailFormat = 'Invalid email format';
+  static const String validationPhoneRequired = 'Phone number is required';
+  static const String validationInvalidPhoneFormat =
+      'Invalid phone number format';
+  static const String validationPasswordRequired = 'Password is required';
+  static const String validationPasswordTooShort =
+      'Password must be at least 8 characters';
 }

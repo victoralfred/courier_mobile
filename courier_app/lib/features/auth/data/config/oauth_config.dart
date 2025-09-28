@@ -22,9 +22,9 @@ class OAuthConfig {
   }
 
   static OAuthProvider _getGoogleProvider() {
-    final env = AppConfig.config.environment;
+    final env = AppConfig.config.name;
 
-    String clientId;
+    final String clientId;
     switch (env) {
       case Environment.development:
         clientId = OAuthEnv.googleClientIdDev;
@@ -34,6 +34,9 @@ class OAuthConfig {
         break;
       case Environment.production:
         clientId = OAuthEnv.googleClientIdProd;
+        break;
+      default:
+        clientId = OAuthEnv.googleClientIdDev;
         break;
     }
 
@@ -55,9 +58,9 @@ class OAuthConfig {
   }
 
   static OAuthProvider _getGithubProvider() {
-    final env = AppConfig.config.environment;
+    final env = AppConfig.config.name;
 
-    String clientId;
+    final String clientId;
     switch (env) {
       case Environment.development:
         clientId = OAuthEnv.githubClientIdDev;
@@ -67,6 +70,9 @@ class OAuthConfig {
         break;
       case Environment.production:
         clientId = OAuthEnv.githubClientIdProd;
+        break;
+      default:
+        clientId = OAuthEnv.githubClientIdDev;
         break;
     }
 
@@ -87,10 +93,10 @@ class OAuthConfig {
   }
 
   static OAuthProvider _getMicrosoftProvider() {
-    final env = AppConfig.config.environment;
+    final env = AppConfig.config.name;
 
-    String clientId;
-    String tenant;
+    final String clientId;
+    final String tenant;
     switch (env) {
       case Environment.development:
         clientId = OAuthEnv.microsoftClientIdDev;
@@ -103,6 +109,10 @@ class OAuthConfig {
       case Environment.production:
         clientId = OAuthEnv.microsoftClientIdProd;
         tenant = OAuthEnv.microsoftTenantProd;
+        break;
+      default:
+        clientId = OAuthEnv.microsoftClientIdDev;
+        tenant = OAuthEnv.microsoftTenantDev;
         break;
     }
 
@@ -126,10 +136,10 @@ class OAuthConfig {
   }
 
   static OAuthProvider _getAppleProvider() {
-    final env = AppConfig.config.environment;
+    final env = AppConfig.config.name;
 
     // Apple Sign In configuration
-    String clientId;
+    final String clientId;
     switch (env) {
       case Environment.development:
         clientId = OAuthEnv.appleServiceIdDev;
@@ -139,6 +149,9 @@ class OAuthConfig {
         break;
       case Environment.production:
         clientId = OAuthEnv.appleServiceIdProd;
+        break;
+      default:
+        clientId = OAuthEnv.appleServiceIdDev;
         break;
     }
 
@@ -171,7 +184,7 @@ class OAuthConfig {
   static String _getRedirectUri(String provider) {
     // Custom URL scheme for mobile apps
     // This should match what's configured in your OAuth provider settings
-    final env = AppConfig.config.environment;
+    final env = AppConfig.config.name;
 
     switch (env) {
       case Environment.development:
@@ -180,6 +193,8 @@ class OAuthConfig {
         return '${AppStrings.oauthUrlSchemeBaseStaging}$provider${AppStrings.oauthUrlSchemeCallback}';
       case Environment.production:
         return '${AppStrings.oauthUrlSchemeBaseProd}$provider${AppStrings.oauthUrlSchemeCallback}';
+      default:
+        return '${AppStrings.oauthUrlSchemeBaseDev}$provider${AppStrings.oauthUrlSchemeCallback}';
     }
   }
 

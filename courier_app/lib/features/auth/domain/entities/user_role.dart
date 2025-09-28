@@ -55,51 +55,46 @@ class UserRole extends Equatable {
   });
 
   /// Check if the role has a specific permission
-  bool hasPermission(String permission) {
-    return permissions.contains(permission);
-  }
+  bool hasPermission(String permission) => permissions.contains(permission);
 
   /// Create a Customer role with default permissions
-  factory UserRole.customer() {
-    return UserRole(
-      type: UserRoleType.customer,
-      permissions: [
-        AppStrings.permissionCreateOrder,
-        AppStrings.permissionViewOrder,
-        AppStrings.permissionCancelOrder,
-        AppStrings.permissionTrackOrder,
-        AppStrings.permissionRateDriver,
-        AppStrings.permissionViewProfile,
-        AppStrings.permissionUpdateProfile,
-      ],
-      assignedAt: DateTime.now(),
-    );
-  }
+  factory UserRole.customer() => UserRole(
+        type: UserRoleType.customer,
+        permissions: [
+          AppStrings.permissionCreateOrder,
+          AppStrings.permissionViewOrder,
+          AppStrings.permissionCancelOrder,
+          AppStrings.permissionTrackOrder,
+          AppStrings.permissionRateDriver,
+          AppStrings.permissionViewProfile,
+          AppStrings.permissionUpdateProfile,
+        ],
+        assignedAt: DateTime.now(),
+      );
 
   /// Create a Driver role with default permissions
-  factory UserRole.driver() {
-    return UserRole(
-      type: UserRoleType.driver,
-      permissions: [
-        AppStrings.permissionViewOrder,
-        AppStrings.permissionAcceptOrder,
-        AppStrings.permissionRejectOrder,
-        AppStrings.permissionUpdateOrderStatus,
-        AppStrings.permissionUpdateLocation,
-        AppStrings.permissionViewEarnings,
-        AppStrings.permissionViewProfile,
-        AppStrings.permissionUpdateProfile,
-        AppStrings.permissionUpdateAvailability,
-      ],
-      assignedAt: DateTime.now(),
-    );
-  }
+  factory UserRole.driver() => UserRole(
+        type: UserRoleType.driver,
+        permissions: [
+          AppStrings.permissionViewOrder,
+          AppStrings.permissionAcceptOrder,
+          AppStrings.permissionRejectOrder,
+          AppStrings.permissionUpdateOrderStatus,
+          AppStrings.permissionUpdateLocation,
+          AppStrings.permissionViewEarnings,
+          AppStrings.permissionViewProfile,
+          AppStrings.permissionUpdateProfile,
+          AppStrings.permissionUpdateAvailability,
+        ],
+        assignedAt: DateTime.now(),
+      );
 
   @override
   List<Object> get props => [type, permissions, assignedAt];
 
   @override
-  String toString() => 'UserRole(type: $type, permissions: ${permissions.length})';
+  String toString() =>
+      'UserRole(type: $type, permissions: ${permissions.length})';
 }
 
 /// Driver-specific data
@@ -137,19 +132,18 @@ class DriverData extends Equatable {
     DateTime? lastLocationUpdate,
     double? latitude,
     double? longitude,
-  }) {
-    return DriverData(
-      vehicleType: vehicleType ?? this.vehicleType,
-      vehicleNumber: vehicleNumber ?? this.vehicleNumber,
-      licenseNumber: licenseNumber ?? this.licenseNumber,
-      isAvailable: isAvailable ?? this.isAvailable,
-      rating: rating ?? this.rating,
-      completedDeliveries: completedDeliveries ?? this.completedDeliveries,
-      lastLocationUpdate: lastLocationUpdate ?? this.lastLocationUpdate,
-      latitude: latitude ?? this.latitude,
-      longitude: longitude ?? this.longitude,
-    );
-  }
+  }) =>
+      DriverData(
+        vehicleType: vehicleType ?? this.vehicleType,
+        vehicleNumber: vehicleNumber ?? this.vehicleNumber,
+        licenseNumber: licenseNumber ?? this.licenseNumber,
+        isAvailable: isAvailable ?? this.isAvailable,
+        rating: rating ?? this.rating,
+        completedDeliveries: completedDeliveries ?? this.completedDeliveries,
+        lastLocationUpdate: lastLocationUpdate ?? this.lastLocationUpdate,
+        latitude: latitude ?? this.latitude,
+        longitude: longitude ?? this.longitude,
+      );
 
   @override
   List<Object?> get props => [
@@ -185,14 +179,14 @@ class CustomerData extends Equatable {
     String? preferredPaymentMethod,
     int? totalOrders,
     double? rating,
-  }) {
-    return CustomerData(
-      savedAddresses: savedAddresses ?? this.savedAddresses,
-      preferredPaymentMethod: preferredPaymentMethod ?? this.preferredPaymentMethod,
-      totalOrders: totalOrders ?? this.totalOrders,
-      rating: rating ?? this.rating,
-    );
-  }
+  }) =>
+      CustomerData(
+        savedAddresses: savedAddresses ?? this.savedAddresses,
+        preferredPaymentMethod:
+            preferredPaymentMethod ?? this.preferredPaymentMethod,
+        totalOrders: totalOrders ?? this.totalOrders,
+        rating: rating ?? this.rating,
+      );
 
   @override
   List<Object?> get props => [

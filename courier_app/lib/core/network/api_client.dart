@@ -10,14 +10,14 @@ import 'interceptors/request_interceptor.dart';
 /// Main API client for making HTTP requests to the backend
 class ApiClient {
   final Dio _dio;
-  final EnvironmentConfig _config;
+  final AppEnvironment _config;
 
   String? _authToken;
   String? _csrfToken;
 
   ApiClient._({
     required Dio dio,
-    required EnvironmentConfig config,
+    required AppEnvironment config,
   })  : _dio = dio,
         _config = config {
     _configureDio();
@@ -53,7 +53,7 @@ class ApiClient {
   /// Factory constructor for custom configuration (mainly for testing)
   factory ApiClient.custom({
     required Dio dio,
-    required EnvironmentConfig config,
+    required AppEnvironment config,
   }) =>
       ApiClient._(dio: dio, config: config);
 
@@ -69,9 +69,9 @@ class ApiClient {
     // Set base options
     _dio.options = BaseOptions(
       baseUrl: _config.apiBaseUrl,
-      connectTimeout: Duration(milliseconds: _config.connectTimeout),
-      receiveTimeout: Duration(milliseconds: _config.receiveTimeout),
-      sendTimeout: Duration(milliseconds: _config.connectTimeout),
+      connectTimeout: _config.connectionTimeout,
+      receiveTimeout: _config.receiveTimeout,
+      sendTimeout: _config.connectionTimeout,
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',

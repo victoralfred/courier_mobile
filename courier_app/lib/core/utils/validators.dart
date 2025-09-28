@@ -30,10 +30,11 @@ class Validators {
   static bool isStrongPassword(String password) {
     if (password.length < 8) return false;
 
-    bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
-    bool hasLowercase = password.contains(RegExp(r'[a-z]'));
-    bool hasDigits = password.contains(RegExp(r'[0-9]'));
-    bool hasSpecialCharacters = password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
+    final bool hasUppercase = password.contains(RegExp(r'[A-Z]'));
+    final bool hasLowercase = password.contains(RegExp(r'[a-z]'));
+    final bool hasDigits = password.contains(RegExp(r'[0-9]'));
+    final bool hasSpecialCharacters =
+        password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'));
 
     return hasUppercase && hasLowercase && hasDigits && hasSpecialCharacters;
   }
@@ -44,7 +45,10 @@ class Validators {
 
     if (password.length >= 8) strength++;
     if (password.length >= 12) strength++;
-    if (password.contains(RegExp(r'[A-Z]')) && password.contains(RegExp(r'[a-z]'))) strength++;
+    if (password.contains(RegExp(r'[A-Z]')) &&
+        password.contains(RegExp(r'[a-z]'))) {
+      strength++;
+    }
     if (password.contains(RegExp(r'[0-9]'))) strength++;
     if (password.contains(RegExp(r'[!@#$%^&*(),.?":{}|<>]'))) strength++;
 
@@ -112,7 +116,8 @@ class Validators {
   static bool isValidVehicleNumber(String vehicleNumber) {
     if (vehicleNumber.isEmpty) return false;
     // Example pattern for Nigerian vehicle numbers: ABC-123-XY
-    return RegExp(r'^[A-Z]{2,3}-\d{3}-[A-Z]{2}$').hasMatch(vehicleNumber.toUpperCase());
+    return RegExp(r'^[A-Z]{2,3}-\d{3}-[A-Z]{2}$')
+        .hasMatch(vehicleNumber.toUpperCase());
   }
 
   /// Validate driver license number

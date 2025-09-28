@@ -2,16 +2,18 @@ import 'package:get_it/get_it.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:delivery_app/core/network/api_client.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/oauth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/oauth_remote_data_source.dart';
+import 'package:delivery_app/features/auth/data/datasources/token_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/repositories/auth_repository_impl.dart';
 import 'package:delivery_app/features/auth/data/repositories/oauth_repository_impl.dart';
 import 'package:delivery_app/features/auth/data/services/biometric_service.dart';
-import 'package:delivery_app/features/auth/data/services/token_manager.dart';
 import 'package:delivery_app/features/auth/data/services/token_manager_impl.dart';
+import 'package:delivery_app/features/auth/domain/services/token_manager.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:delivery_app/features/auth/domain/repositories/oauth_repository.dart';
 import 'package:delivery_app/features/auth/domain/usecases/login.dart';
@@ -22,43 +24,53 @@ import 'package:delivery_app/features/auth/presentation/blocs/registration/regis
 final getIt = GetIt.instance;
 
 Future<void> init() async {
-  // External dependencies
+  // External dependencies - Register SharedPreferences as a future singleton
+  final sharedPreferences = await SharedPreferences.getInstance();
+  getIt.registerLazySingleton<SharedPreferences>(() => sharedPreferences);
+
   getIt.registerLazySingleton(() => const FlutterSecureStorage());
   getIt.registerLazySingleton(() => LocalAuthentication());
   getIt.registerLazySingleton(() => Dio());
 
   // Core
-  getIt.registerLazySingleton(() => ApiClient(getIt()));
+  getIt.registerLazySingleton(() => ApiClient.development());
 
   // Auth - Data Sources
   getIt.registerLazySingleton<AuthLocalDataSource>(
-    () => AuthLocalDataSourceImpl(storage: getIt()),
+    () => AuthLocalDataSourceImpl(
+      secureStorage: getIt<FlutterSecureStorage>(),
+      preferences: getIt<SharedPreferences>(),
+    ),
   );
 
   getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(client: getIt()),
+    () => AuthRemoteDataSourceImpl(apiClient: getIt<ApiClient>()),
   );
 
   getIt.registerLazySingleton<OAuthLocalDataSource>(
-    () => OAuthLocalDataSourceImpl(storage: getIt()),
+    () => OAuthLocalDataSourceImpl(secureStorage: getIt<FlutterSecureStorage>()),
   );
 
   getIt.registerLazySingleton<OAuthRemoteDataSource>(
-    () => OAuthRemoteDataSourceImpl(client: getIt()),
+    () => OAuthRemoteDataSourceImpl(apiClient: getIt<ApiClient>()),
+  );
+
+  getIt.registerLazySingleton<TokenLocalDataSource>(
+    () => TokenLocalDataSourceImpl(secureStorage: getIt<FlutterSecureStorage>()),
   );
 
   // Auth - Services
   getIt.registerLazySingleton<TokenManager>(
     () => TokenManagerImpl(
-      localDataSource: getIt(),
-      apiClient: getIt(),
+      localDataSource: getIt<TokenLocalDataSource>(),
+      apiClient: getIt<ApiClient>(),
     ),
   );
 
   getIt.registerLazySingleton<BiometricService>(
     () => BiometricServiceImpl(
-      localAuth: getIt(),
-      storage: getIt(),
+      localAuth: getIt<LocalAuthentication>(),
+      storage: getIt<FlutterSecureStorage>(),
     ),
   );
 
@@ -67,6 +79,7 @@ Future<void> init() async {
     () => AuthRepositoryImpl(
       remoteDataSource: getIt(),
       localDataSource: getIt(),
+      biometricService: getIt(),
     ),
   );
 
@@ -84,15 +97,16 @@ Future<void> init() async {
   // Auth - BLoCs
   getIt.registerFactory(
     () => LoginBloc(
-      loginUseCase: getIt(),
-      oauthRepository: getIt(),
-      biometricService: getIt(),
+      authRepository: getIt<AuthRepository>(),
+      oauthRepository: getIt<OAuthRepository>(),
+      localAuth: getIt<LocalAuthentication>(),
+      loginUseCase: getIt<Login>(),
     ),
   );
 
   getIt.registerFactory(
     () => RegistrationBloc(
-      registerUseCase: getIt(),
+      authRepository: getIt<AuthRepository>(),
     ),
   );
 }

@@ -1,24 +1,25 @@
 import 'package:flutter/foundation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
 import '../config/environment.dart';
+import '../config/app_config.dart';
 
 /// Service for reporting errors to external monitoring services
 class ErrorReportingService {
-  final EnvironmentConfig _config;
+  final AppEnvironment _config;
   bool _isInitialized = false;
 
-  ErrorReportingService({required EnvironmentConfig config}) : _config = config;
+  ErrorReportingService({required AppEnvironment config}) : _config = config;
 
   /// Initialize the error reporting service
   Future<void> initialize() async {
     if (_isInitialized) return;
 
     // Only initialize in non-debug environments
-    if (!_config.isDevelopment && _config.sentryDsn.isNotEmpty) {
+    if (!AppConfig.isDebug && _config.sentryDsn.isNotEmpty) {
       await SentryFlutter.init(
         (options) {
           options.dsn = _config.sentryDsn;
-          options.environment = _config.environmentName;
+          options.environment = _config.name;
           options.debug = false;
           options.tracesSampleRate = 0.1;
           options.attachScreenshot = true;

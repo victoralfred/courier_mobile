@@ -74,32 +74,37 @@ class RegistrationState extends Equatable {
     bool? canSubmit,
     bool? isLoading,
     int? passwordStrength,
-  }) {
-    return RegistrationState(
-      firstName: firstName ?? this.firstName,
-      lastName: lastName ?? this.lastName,
-      email: email ?? this.email,
-      phone: phone ?? this.phone,
-      password: password ?? this.password,
-      confirmPassword: confirmPassword ?? this.confirmPassword,
-      selectedRole: selectedRole != null ? selectedRole() : this.selectedRole,
-      termsAccepted: termsAccepted ?? this.termsAccepted,
-      isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
-      isConfirmPasswordVisible: isConfirmPasswordVisible ?? this.isConfirmPasswordVisible,
-      status: status ?? this.status,
-      firstNameError: firstNameError != null ? firstNameError() : this.firstNameError,
-      lastNameError: lastNameError != null ? lastNameError() : this.lastNameError,
-      emailError: emailError != null ? emailError() : this.emailError,
-      phoneError: phoneError != null ? phoneError() : this.phoneError,
-      passwordError: passwordError != null ? passwordError() : this.passwordError,
-      confirmPasswordError: confirmPasswordError != null ? confirmPasswordError() : this.confirmPasswordError,
-      generalError: generalError != null ? generalError() : this.generalError,
-      user: user != null ? user() : this.user,
-      canSubmit: canSubmit ?? this.canSubmit,
-      isLoading: isLoading ?? this.isLoading,
-      passwordStrength: passwordStrength ?? this.passwordStrength,
-    );
-  }
+  }) =>
+      RegistrationState(
+        firstName: firstName ?? this.firstName,
+        lastName: lastName ?? this.lastName,
+        email: email ?? this.email,
+        phone: phone ?? this.phone,
+        password: password ?? this.password,
+        confirmPassword: confirmPassword ?? this.confirmPassword,
+        selectedRole: selectedRole != null ? selectedRole() : this.selectedRole,
+        termsAccepted: termsAccepted ?? this.termsAccepted,
+        isPasswordVisible: isPasswordVisible ?? this.isPasswordVisible,
+        isConfirmPasswordVisible:
+            isConfirmPasswordVisible ?? this.isConfirmPasswordVisible,
+        status: status ?? this.status,
+        firstNameError:
+            firstNameError != null ? firstNameError() : this.firstNameError,
+        lastNameError:
+            lastNameError != null ? lastNameError() : this.lastNameError,
+        emailError: emailError != null ? emailError() : this.emailError,
+        phoneError: phoneError != null ? phoneError() : this.phoneError,
+        passwordError:
+            passwordError != null ? passwordError() : this.passwordError,
+        confirmPasswordError: confirmPasswordError != null
+            ? confirmPasswordError()
+            : this.confirmPasswordError,
+        generalError: generalError != null ? generalError() : this.generalError,
+        user: user != null ? user() : this.user,
+        canSubmit: canSubmit ?? this.canSubmit,
+        isLoading: isLoading ?? this.isLoading,
+        passwordStrength: passwordStrength ?? this.passwordStrength,
+      );
 
   @override
   List<Object?> get props => [
