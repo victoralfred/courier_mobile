@@ -18,6 +18,21 @@ abstract class BiometricService {
 
   /// Check if the device supports biometric authentication
   Future<bool> isDeviceSupported();
+
+  /// Check if user has enabled biometric authentication in app settings
+  Future<bool> isBiometricEnabled();
+
+  /// Enable biometric authentication in app settings
+  Future<bool> enableBiometric();
+
+  /// Disable biometric authentication in app settings
+  Future<bool> disableBiometric();
+
+  /// Check if biometric enrollment dialog has been shown to user
+  Future<bool> hasEnrollmentBeenShown();
+
+  /// Mark that biometric enrollment dialog has been shown
+  Future<bool> markEnrollmentShown();
 }
 
 /// Implementation of BiometricService
@@ -87,6 +102,67 @@ class BiometricServiceImpl implements BiometricService {
     try {
       return await localAuth.canCheckBiometrics ||
              await localAuth.isDeviceSupported();
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> isBiometricEnabled() async {
+    try {
+      final value = await storage.read(key: AppStrings.keyBiometricEnabled);
+      return value == 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> enableBiometric() async {
+    try {
+      await storage.write(
+        key: AppStrings.keyBiometricEnabled,
+        value: 'true',
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> disableBiometric() async {
+    try {
+      await storage.write(
+        key: AppStrings.keyBiometricEnabled,
+        value: 'false',
+      );
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> hasEnrollmentBeenShown() async {
+    try {
+      final value = await storage.read(
+        key: AppStrings.keyBiometricEnrollmentShown,
+      );
+      return value == 'true';
+    } catch (e) {
+      return false;
+    }
+  }
+
+  @override
+  Future<bool> markEnrollmentShown() async {
+    try {
+      await storage.write(
+        key: AppStrings.keyBiometricEnrollmentShown,
+        value: 'true',
+      );
+      return true;
     } catch (e) {
       return false;
     }

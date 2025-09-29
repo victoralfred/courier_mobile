@@ -32,26 +32,26 @@ android {
         versionName = flutter.versionName
         multiDexEnabled = true
     }
-    signingConfigs{
-        create("release") {
-            storeFile = file(findProperty("APP_UPLOAD_STORE_FILE") as String)
-            storePassword = findProperty("APP_UPLOAD_STORE_PASSWORD") as String
-            keyAlias = findProperty("APP_UPLOAD_KEY_ALIAS") as String
-            keyPassword = findProperty("APP_UPLOAD_KEY_PASSWORD") as String
-        }
-        create("develop") {
-            storeFile = file(findProperty("APP_UPLOAD_STORE_FILE") as String)
-            storePassword = findProperty("APP_UPLOAD_STORE_PASSWORD") as String
-            keyAlias = findProperty("APP_UPLOAD_KEY_ALIAS") as String
-            keyPassword = findProperty("APP_UPLOAD_KEY_PASSWORD") as String
-        }
-    }
+    // signingConfigs{
+    //     create("release") {
+    //         storeFile = file(findProperty("APP_UPLOAD_STORE_FILE") as String)
+    //         storePassword = findProperty("APP_UPLOAD_STORE_PASSWORD") as String
+    //         keyAlias = findProperty("APP_UPLOAD_KEY_ALIAS") as String
+    //         keyPassword = findProperty("APP_UPLOAD_KEY_PASSWORD") as String
+    //     }
+    //     create("develop") {
+    //         storeFile = file(findProperty("APP_UPLOAD_STORE_FILE") as String)
+    //         storePassword = findProperty("APP_UPLOAD_STORE_PASSWORD") as String
+    //         keyAlias = findProperty("APP_UPLOAD_KEY_ALIAS") as String
+    //         keyPassword = findProperty("APP_UPLOAD_KEY_PASSWORD") as String
+    //     }
+    // }
 
     buildTypes {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("develop")
+            signingConfig = signingConfigs.getByName("debug")
             }
     }
 }

@@ -532,6 +532,29 @@ class AppStrings {
   static const String biometricLoginFailed = 'Biometric login failed';
   static const String biometricEnableFailed = 'Failed to enable biometric';
   static const String biometricDisableFailed = 'Failed to disable biometric';
+  static const String biometricEnrollmentTitle = 'Enable Biometric Login';
+  static const String biometricEnrollmentMessage =
+      'Would you like to use biometric authentication for faster and secure login?';
+  static const String biometricEnrollmentYes = 'Enable';
+  static const String biometricEnrollmentNo = 'Not Now';
+  static const String biometricEnrollmentSkip = 'Skip';
+  static const String biometricSettingsTitle = 'Biometric Settings';
+  static const String biometricSettingsDescription =
+      'Manage biometric authentication preferences';
+  static const String biometricPinFallbackTitle = 'Enter PIN';
+  static const String biometricPinFallbackMessage =
+      'Biometric authentication failed. Please enter your PIN.';
+  static const String biometricPasswordFallbackTitle = 'Enter Password';
+  static const String biometricPasswordFallbackMessage =
+      'Biometric authentication failed. Please enter your password.';
+  static const String biometricPreferenceSaved =
+      'Biometric preference saved successfully';
+  static const String biometricPreferenceLoadFailed =
+      'Failed to load biometric preference';
+
+  // Storage Keys - Biometric
+  static const String keyBiometricEnabled = 'biometric_enabled';
+  static const String keyBiometricEnrollmentShown = 'biometric_enrollment_shown';
 
   // Repository Error Messages
   static const String errorUserNotAuthenticated = 'User not authenticated';
