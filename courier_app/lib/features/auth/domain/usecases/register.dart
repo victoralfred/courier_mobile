@@ -61,6 +61,7 @@ class Register {
       email: params.email,
       phone: params.phone,
       password: params.password,
+      role: params.role,
     );
   }
 }
@@ -72,6 +73,7 @@ class RegisterParams {
   final String email;
   final String phone;
   final String password;
+  final String role;
 
   RegisterParams({
     required this.firstName,
@@ -79,5 +81,6 @@ class RegisterParams {
     required this.email,
     required this.phone,
     required this.password,
+    required this.role,
   });
 }

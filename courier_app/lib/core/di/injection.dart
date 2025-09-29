@@ -107,6 +107,7 @@ Future<void> init() async {
   getIt.registerFactory(
     () => RegistrationBloc(
       authRepository: getIt<AuthRepository>(),
+      registerUseCase: getIt<Register>(),
     ),
   );
 }

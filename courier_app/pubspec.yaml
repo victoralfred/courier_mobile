@@ -80,6 +80,10 @@ dependencies:
   local_auth: ^2.2.0
   crypto: ^3.0.3
 
+  # OAuth Authentication
+  flutter_web_auth_2: ^3.1.1
+  url_launcher: ^6.2.5
+
   # Utilities
   intl: ^0.20.2
   timeago: ^3.6.1

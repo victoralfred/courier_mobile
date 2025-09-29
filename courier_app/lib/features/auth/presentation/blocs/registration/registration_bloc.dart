@@ -4,14 +4,17 @@ import 'package:delivery_app/core/constants/app_strings.dart';
 import 'package:delivery_app/core/utils/validators.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
+import 'package:delivery_app/features/auth/domain/usecases/register.dart';
 import 'registration_event.dart';
 import 'registration_state.dart';
 
 class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
   final AuthRepository authRepository;
+  final Register registerUseCase;
 
   RegistrationBloc({
     required this.authRepository,
+    required this.registerUseCase,
   }) : super(const RegistrationState()) {
     on<RegistrationFirstNameChanged>(_onFirstNameChanged);
     on<RegistrationLastNameChanged>(_onLastNameChanged);
@@ -239,12 +242,25 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
       normalizedPhone = '+234$normalizedPhone';
     }
 
-    final result = await authRepository.register(
-      firstName: state.firstName,
-      lastName: state.lastName,
-      email: state.email,
-      phone: normalizedPhone,
-      password: state.password,
+    // Get selected role and convert to string value
+    if (state.selectedRole == null) {
+      emit(state.copyWith(
+        status: RegistrationStatus.failure,
+        isLoading: false,
+        generalError: () => AppStrings.errorRoleRequired,
+      ));
+      return;
+    }
+
+    final result = await registerUseCase(
+      RegisterParams(
+        firstName: state.firstName,
+        lastName: state.lastName,
+        email: state.email,
+        phone: normalizedPhone,
+        password: state.password,
+        role: state.selectedRole!.value,
+      ),
     );
 
     result.fold(

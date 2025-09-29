@@ -78,12 +78,9 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String phone,
     required String password,
+    required String role,
   }) async {
     try {
-      // Get role from the registration context (this should be passed from the UI)
-      // For now, defaulting to customer
-      final role = UserRoleType.customer.value;
-
       final userModel = await remoteDataSource.register(
         firstName: firstName,
         lastName: lastName,
