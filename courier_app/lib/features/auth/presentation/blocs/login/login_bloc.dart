@@ -130,16 +130,22 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
     );
 
     result.fold(
-      (failure) => emit(state.copyWith(
-        status: LoginStatus.failure,
-        isLoading: false,
-        generalError: () => failure.message,
-      )),
-      (user) => emit(state.copyWith(
-        status: LoginStatus.success,
-        isLoading: false,
-        user: () => user,
-      )),
+      (failure) {
+        print('LoginBloc: Login failed - ${failure.message}');
+        emit(state.copyWith(
+          status: LoginStatus.failure,
+          isLoading: false,
+          generalError: () => failure.message,
+        ));
+      },
+      (user) {
+        print('LoginBloc: Login success - User: ${user.email}, Role: ${user.role.type}');
+        emit(state.copyWith(
+          status: LoginStatus.success,
+          isLoading: false,
+          user: () => user,
+        ));
+      },
     );
   }
 

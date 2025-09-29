@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
 
 class ForgotPasswordScreen extends StatelessWidget {
@@ -72,7 +73,7 @@ class ForgotPasswordScreen extends StatelessWidget {
               const SizedBox(height: 16),
               TextButton(
                 onPressed: () {
-                  Navigator.pop(context);
+                  context.pop();
                 },
                 child: const Text(AppStrings.backToLogin),
               ),

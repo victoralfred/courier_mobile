@@ -48,6 +48,7 @@ class AuthGuard {
           // Redirect based on role
           switch (user.role.type) {
             case UserRoleType.customer:
+            case UserRoleType.admin: // Admin users go to customer home
               return RoutePaths.customerHome;
             case UserRoleType.driver:
               // Check if driver has completed onboarding
@@ -76,18 +77,26 @@ class RoleGuard {
     BuildContext context,
     GoRouterState state,
   ) async {
+    print('RoleGuard: Checking customer role requirement for ${state.uri.path}');
     final isAuthenticated = await authRepository.isAuthenticated();
+    print('RoleGuard: User authenticated: $isAuthenticated');
 
     if (!isAuthenticated) {
+      print('RoleGuard: User not authenticated, redirecting to login');
       return RoutePaths.login;
     }
 
     final userResult = await authRepository.getCurrentUser();
 
     return userResult.fold(
-      (failure) => RoutePaths.login,
+      (failure) {
+        print('RoleGuard: Failed to get current user: ${failure.message}');
+        return RoutePaths.login;
+      },
       (user) {
-        if (user.role.type != UserRoleType.customer) {
+        print('RoleGuard: Current user role: ${user.role.type}');
+        // Allow both customer and admin roles
+        if (user.role.type != UserRoleType.customer && user.role.type != UserRoleType.admin) {
           // Redirect to appropriate home based on actual role
           switch (user.role.type) {
             case UserRoleType.driver:
@@ -98,6 +107,7 @@ class RoleGuard {
               return RoutePaths.login;
           }
         }
+        print('RoleGuard: User has correct role, allowing navigation');
         return null; // User has customer role
       },
     );

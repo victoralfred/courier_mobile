@@ -5,6 +5,7 @@ import 'package:delivery_app/core/constants/app_strings.dart';
 enum UserRoleType {
   customer,
   driver,
+  admin,
 }
 
 /// Extension methods for UserRoleType
@@ -16,6 +17,8 @@ extension UserRoleTypeExtension on UserRoleType {
         return AppStrings.roleCustomer;
       case UserRoleType.driver:
         return AppStrings.roleDriver;
+      case UserRoleType.admin:
+        return 'Admin';
     }
   }
 
@@ -26,6 +29,8 @@ extension UserRoleTypeExtension on UserRoleType {
         return 'customer';
       case UserRoleType.driver:
         return 'driver';
+      case UserRoleType.admin:
+        return 'admin';
     }
   }
 
@@ -36,8 +41,12 @@ extension UserRoleTypeExtension on UserRoleType {
         return UserRoleType.customer;
       case 'driver':
         return UserRoleType.driver;
+      case 'admin':
+        // Treat admin as customer for now (they can access customer features)
+        return UserRoleType.customer;
       default:
-        throw ArgumentError(AppStrings.errorInvalidUserRole);
+        // Default to customer role for unknown roles
+        return UserRoleType.customer;
     }
   }
 }

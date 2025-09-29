@@ -81,6 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
           // Navigate based on user role
           switch (user.role.type) {
             case UserRoleType.customer:
+            case UserRoleType.admin: // Admin users go to customer home
               context.go(RoutePaths.customerHome);
               break;
             case UserRoleType.driver:

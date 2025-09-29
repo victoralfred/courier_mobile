@@ -38,6 +38,7 @@ class RegistrationScreen extends StatelessWidget {
                 if (state.user != null) {
                   switch (state.user!.role.type) {
                     case UserRoleType.customer:
+                    case UserRoleType.admin: // Admin users go to customer home
                       context.go(RoutePaths.customerHome);
                       break;
                     case UserRoleType.driver:
@@ -416,7 +417,7 @@ class RegistrationScreen extends StatelessWidget {
           const Text(AppStrings.alreadyHaveAccount),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              context.pop();
             },
             child: const Text(AppStrings.signIn),
           ),

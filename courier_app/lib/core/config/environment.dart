@@ -44,8 +44,8 @@ class AppEnvironment {
   /// Development environment configuration
   factory AppEnvironment.development() => const AppEnvironment(
         name: Environment.development,
-        apiBaseUrl: 'http://localhost:8080/api/v1',
-        wsBaseUrl: 'ws://localhost:8080/ws',
+        apiBaseUrl: 'http://10.0.2.2:8080/api/v1',  // Use 10.0.2.2 for Android emulator
+        wsBaseUrl: 'ws://10.0.2.2:8080/ws',
         enableLogging: true,
         enableCertificatePinning: false,
         connectionTimeout: Duration(seconds: 30),

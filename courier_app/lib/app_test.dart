@@ -1,11 +1,5 @@
 import 'package:delivery_app/core/constants/app_strings.dart';
-import 'package:delivery_app/features/auth/presentation/screens/login_screen.dart';
-import 'package:delivery_app/features/auth/presentation/screens/registration_screen.dart';
-import 'package:delivery_app/features/auth/presentation/screens/forgot_password_screen.dart';
-import 'package:delivery_app/features/customer/presentation/screens/customer_home_screen.dart';
-import 'package:delivery_app/features/driver/presentation/screens/driver_home_screen.dart';
 import 'package:flutter/material.dart';
-import 'core/config/app_config.dart';
 
 /// Test version of the app with simple routing
 class TestCourierApp extends StatelessWidget {

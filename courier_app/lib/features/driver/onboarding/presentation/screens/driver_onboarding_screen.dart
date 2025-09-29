@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:delivery_app/core/constants/app_strings.dart';
 import 'package:delivery_app/core/routing/route_names.dart';
 
 class DriverOnboardingScreen extends StatefulWidget {
@@ -57,33 +56,29 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                 title: const Text('Personal Information'),
                 content: _buildPersonalInfoStep(),
                 isActive: _currentStep >= 0,
-                state: _currentStep > 0
-                    ? StepState.complete
-                    : StepState.indexed,
+                state:
+                    _currentStep > 0 ? StepState.complete : StepState.indexed,
               ),
               Step(
                 title: const Text('Vehicle Information'),
                 content: _buildVehicleInfoStep(),
                 isActive: _currentStep >= 1,
-                state: _currentStep > 1
-                    ? StepState.complete
-                    : StepState.indexed,
+                state:
+                    _currentStep > 1 ? StepState.complete : StepState.indexed,
               ),
               Step(
                 title: const Text('Document Upload'),
                 content: _buildDocumentUploadStep(),
                 isActive: _currentStep >= 2,
-                state: _currentStep > 2
-                    ? StepState.complete
-                    : StepState.indexed,
+                state:
+                    _currentStep > 2 ? StepState.complete : StepState.indexed,
               ),
               Step(
                 title: const Text('Review & Submit'),
                 content: _buildReviewStep(),
                 isActive: _currentStep >= 3,
-                state: _currentStep == 3
-                    ? StepState.indexed
-                    : StepState.disabled,
+                state:
+                    _currentStep == 3 ? StepState.indexed : StepState.disabled,
               ),
             ],
           ),

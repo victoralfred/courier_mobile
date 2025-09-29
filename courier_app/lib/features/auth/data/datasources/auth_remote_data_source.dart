@@ -60,13 +60,13 @@ abstract class AuthRemoteDataSource {
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient _apiClient;
 
-  // API Endpoints
-  static const String _loginEndpoint = '/auth/login';
-  static const String _registerEndpoint = '/auth/register';
+  // API Endpoints (aligned with backend)
+  static const String _loginEndpoint = '/users/auth';
+  static const String _registerEndpoint = '/users';
   static const String _logoutEndpoint = '/auth/logout';
   static const String _refreshTokenEndpoint = '/auth/refresh';
   static const String _currentUserEndpoint = '/users/me';
-  static const String _updateProfileEndpoint = '/users/profile';
+  static const String _updateProfileEndpoint = '/users/me';
   static const String _passwordResetEndpoint = '/auth/password/reset';
   static const String _verifyEmailEndpoint = '/auth/email/verify';
   static const String _changePasswordEndpoint = '/auth/password/change';
@@ -90,13 +90,34 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        final userData = response.data['user'];
-        final tokens = response.data['tokens'];
+        // Backend returns data directly under 'data' key
+        final responseData = response.data['data'];
 
-        // Store tokens in the response for the repository to handle
-        userData['access_token'] = tokens['access_token'];
-        userData['refresh_token'] = tokens['refresh_token'];
-        userData['csrf_token'] = tokens['csrf_token'];
+        // Parse the name field to get first and last names
+        final fullName = responseData['name'] ?? '';
+        final nameParts = fullName.split(' ');
+        final firstName = nameParts.isNotEmpty ? nameParts.first : '';
+        final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+
+        // Create user data structure expected by UserModel
+        final userData = {
+          'id': responseData['user_id'],
+          'email': responseData['email'],
+          'first_name': firstName,
+          'last_name': lastName,
+          // TODO: Backend should return phone number in login response
+          'phone': '+2340000000000', // Placeholder - backend doesn't provide phone in login response
+          'role': responseData['role'],
+          'status': 'active',
+          'created_at': DateTime.now().toIso8601String(),
+          'updated_at': DateTime.now().toIso8601String(),
+          // Add token data
+          'access_token': responseData['token'],
+          // TODO: Backend should return refresh_token in login response
+          'refresh_token': '', // Placeholder - backend doesn't provide refresh token yet
+          // TODO: Backend should return csrf_token in login response
+          'csrf_token': '', // Placeholder - backend doesn't provide CSRF token yet
+        };
 
         return UserModel.fromJson(userData);
       } else {
@@ -153,15 +174,9 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       );
 
       if (response.statusCode == 201) {
-        final userData = response.data['user'];
-        final tokens = response.data['tokens'];
-
-        // Store tokens in the response for the repository to handle
-        userData['access_token'] = tokens['access_token'];
-        userData['refresh_token'] = tokens['refresh_token'];
-        userData['csrf_token'] = tokens['csrf_token'];
-
-        return UserModel.fromJson(userData);
+        // Registration successful, but backend doesn't return tokens
+        // Automatically login to get tokens and complete user data
+        return await login(email: email, password: password);
       } else {
         throw ServerException(
           message:

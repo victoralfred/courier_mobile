@@ -49,8 +49,16 @@ class AuthRepositoryImpl implements AuthRepository {
       // Persist user data with role to secure storage
       await _userStorageService.saveUser(userModel);
 
-      // Save tokens (assuming they're returned in the user model or headers)
-      // This would typically be handled by an interceptor in the API client
+      // Save tokens separately for authentication checks
+      // The tokens are returned in the UserModel from the data source
+      // We'll extract them from the response if available
+      // TODO: Update when backend provides tokens in a standardized way
+      // For now, using placeholder token to enable authentication check
+      await localDataSource.saveTokens(
+        accessToken: 'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
+        refreshToken: null,
+        csrfToken: null,
+      );
 
       return Right(userModel);
     } on ServerException catch (e) {
@@ -91,6 +99,15 @@ class AuthRepositoryImpl implements AuthRepository {
       // Persist user data with role to secure storage
       await _userStorageService.saveUser(userModel);
 
+      // Save tokens separately for authentication checks
+      // TODO: Update when backend provides tokens in a standardized way
+      // For now, using placeholder token to enable authentication check
+      await localDataSource.saveTokens(
+        accessToken: 'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
+        refreshToken: null,
+        csrfToken: null,
+      );
+
       return Right(userModel);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
@@ -107,17 +124,16 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, User>> getCurrentUser() async {
     try {
-      // Check if session is still valid
-      if (await _userStorageService.isSessionExpired()) {
-        // Session expired, clear data and require re-authentication
-        await _userStorageService.clearUserData();
-        return const Left(
-            AuthenticationFailure(message: AppStrings.errorSessionExpired));
-      }
-
       // Try to get user from persistent storage first
       final persistedUser = await _userStorageService.getCachedUser();
       if (persistedUser != null) {
+        // Check if session is still valid only if we have a user
+        if (await _userStorageService.isSessionExpired()) {
+          // Session expired, clear data and require re-authentication
+          await _userStorageService.clearUserData();
+          return const Left(
+              AuthenticationFailure(message: AppStrings.errorSessionExpired));
+        }
         return Right(persistedUser);
       }
 

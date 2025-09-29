@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/auth/presentation/blocs/login/login_bloc.dart';
+import '../../features/auth/presentation/blocs/registration/registration_bloc.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/registration_screen.dart';
 import '../../features/auth/presentation/screens/forgot_password_screen.dart';
@@ -38,14 +42,20 @@ class AppRouter {
           name: RouteNames.login,
           builder: (context, state) {
             final redirect = state.uri.queryParameters['redirect'];
-            return LoginScreen(redirectPath: redirect);
+            return BlocProvider(
+              create: (_) => GetIt.instance<LoginBloc>(),
+              child: LoginScreen(redirectPath: redirect),
+            );
           },
           redirect: authGuard.redirectIfAuthenticated,
         ),
         GoRoute(
           path: RoutePaths.register,
           name: RouteNames.register,
-          builder: (context, state) => const RegistrationScreen(),
+          builder: (context, state) => BlocProvider(
+            create: (_) => GetIt.instance<RegistrationBloc>(),
+            child: const RegistrationScreen(),
+          ),
           redirect: authGuard.redirectIfAuthenticated,
         ),
         GoRoute(

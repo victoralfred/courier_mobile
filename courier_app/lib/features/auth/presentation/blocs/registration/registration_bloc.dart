@@ -220,10 +220,22 @@ class RegistrationBloc extends Bloc<RegistrationEvent, RegistrationState> {
     ));
 
     // Normalize phone number for Nigerian format
-    String normalizedPhone = state.phone;
-    if (normalizedPhone.startsWith('0')) {
+    String normalizedPhone = state.phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
+
+    // If it's just 10 digits, add +234
+    if (RegExp(r'^[789][01]\d{8}$').hasMatch(normalizedPhone)) {
+      normalizedPhone = '+234$normalizedPhone';
+    }
+    // If it starts with 0, replace with +234
+    else if (normalizedPhone.startsWith('0')) {
       normalizedPhone = '+234${normalizedPhone.substring(1)}';
-    } else if (!normalizedPhone.startsWith('+')) {
+    }
+    // If it starts with 234 but no +, add +
+    else if (normalizedPhone.startsWith('234')) {
+      normalizedPhone = '+$normalizedPhone';
+    }
+    // If none of the above, assume it needs +234 prefix
+    else if (!normalizedPhone.startsWith('+234')) {
       normalizedPhone = '+234$normalizedPhone';
     }
 

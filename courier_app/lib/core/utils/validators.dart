@@ -78,8 +78,19 @@ class Validators {
     if (phone.isEmpty) return false;
     // Remove spaces, dashes, and parentheses
     final cleaned = phone.replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    // Check for Nigerian format: +234 or 0 followed by 10 digits
-    return RegExp(r'^(\+234|234|0)[789][01]\d{8}$').hasMatch(cleaned);
+
+    // If it's just 10 digits (without country code), validate it
+    if (RegExp(r'^[789][01]\d{8}$').hasMatch(cleaned)) {
+      return true;
+    }
+
+    // If it starts with 0 (local format), validate it
+    if (RegExp(r'^0[789][01]\d{8}$').hasMatch(cleaned)) {
+      return true;
+    }
+
+    // Check for full international format: +234 or 234 followed by 10 digits
+    return RegExp(r'^(\+234|234)[789][01]\d{8}$').hasMatch(cleaned);
   }
 
   /// Validate credit card number using Luhn algorithm

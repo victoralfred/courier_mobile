@@ -18,6 +18,8 @@ class LoginScreen extends StatelessWidget {
         body: SafeArea(
           child: BlocConsumer<LoginBloc, LoginState>(
             listener: (context, state) {
+              print('LoginScreen BlocListener: status=${state.status}, user=${state.user != null}');
+
               if (state.status == LoginStatus.failure &&
                   state.generalError != null) {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -28,19 +30,25 @@ class LoginScreen extends StatelessWidget {
                 );
               } else if (state.status == LoginStatus.success &&
                   state.user != null) {
+                print('LoginScreen: Login success! User role: ${state.user!.role.type}');
                 // Handle redirect or navigate based on user role
                 if (redirectPath != null && redirectPath!.isNotEmpty) {
+                  print('LoginScreen: Navigating to redirect path: $redirectPath');
                   context.go(redirectPath!);
                 } else {
                   // Navigate based on user role
                   switch (state.user!.role.type) {
                     case UserRoleType.customer:
+                    case UserRoleType.admin: // Admin users go to customer home
+                      print('LoginScreen: Navigating to customer home');
                       context.go(RoutePaths.customerHome);
                       break;
                     case UserRoleType.driver:
                       if (state.user!.role.permissions.contains('driver.verified')) {
+                        print('LoginScreen: Navigating to driver home');
                         context.go(RoutePaths.driverHome);
                       } else {
+                        print('LoginScreen: Navigating to driver onboarding');
                         context.go(RoutePaths.driverOnboarding);
                       }
                       break;
