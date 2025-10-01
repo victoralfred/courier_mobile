@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
-import 'package:delivery_app/features/auth/data/services/biometric_service.dart';
+import 'package:delivery_app/features/auth/domain/services/biometric_service.dart';
 import 'package:get_it/get_it.dart';
 
 /// Screen for managing biometric authentication settings

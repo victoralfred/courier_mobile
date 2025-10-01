@@ -4,10 +4,9 @@ import 'package:delivery_app/core/error/exceptions.dart';
 import 'package:delivery_app/core/error/failures.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_remote_data_source.dart';
-import 'package:delivery_app/features/auth/data/services/biometric_service.dart';
+import 'package:delivery_app/features/auth/domain/services/biometric_service.dart';
 import 'package:delivery_app/features/auth/data/services/user_storage_service.dart';
 import 'package:delivery_app/features/auth/domain/entities/user.dart';
-import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
@@ -55,7 +54,8 @@ class AuthRepositoryImpl implements AuthRepository {
       // TODO: Update when backend provides tokens in a standardized way
       // For now, using placeholder token to enable authentication check
       await localDataSource.saveTokens(
-        accessToken: 'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
+        accessToken:
+            'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
         refreshToken: null,
         csrfToken: null,
       );
@@ -66,8 +66,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on NetworkException catch (e) {
       return Left(NetworkFailure(message: e.message));
     } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorUnexpected));
+      return const Left(UnexpectedFailure(message: AppStrings.errorUnexpected));
     }
   }
 
@@ -100,7 +99,8 @@ class AuthRepositoryImpl implements AuthRepository {
       // TODO: Update when backend provides tokens in a standardized way
       // For now, using placeholder token to enable authentication check
       await localDataSource.saveTokens(
-        accessToken: 'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
+        accessToken:
+            'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
         refreshToken: null,
         csrfToken: null,
       );
@@ -113,8 +113,7 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ValidationException catch (e) {
       return Left(ValidationFailure(message: e.message));
     } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorUnexpected));
+      return const Left(UnexpectedFailure(message: AppStrings.errorUnexpected));
     }
   }
 
@@ -163,8 +162,7 @@ class AuthRepositoryImpl implements AuthRepository {
       return const Left(
           AuthenticationFailure(message: AppStrings.errorUserNotAuthenticated));
     } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorUnexpected));
+      return const Left(UnexpectedFailure(message: AppStrings.errorUnexpected));
     }
   }
 
@@ -183,7 +181,8 @@ class AuthRepositoryImpl implements AuthRepository {
 
       return const Right(true);
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorLogoutFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorLogoutFailed));
     }
   }
 
@@ -212,7 +211,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorRefreshTokenFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorRefreshTokenFailed));
     }
   }
 
@@ -245,7 +245,8 @@ class AuthRepositoryImpl implements AuthRepository {
       }
       return Right(token);
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorGetCsrfTokenFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorGetCsrfTokenFailed));
     }
   }
 
@@ -263,7 +264,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return const Right(true);
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorSaveTokensFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorSaveTokensFailed));
     }
   }
 
@@ -273,7 +275,8 @@ class AuthRepositoryImpl implements AuthRepository {
       await localDataSource.clearTokens();
       return const Right(true);
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorClearTokensFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorClearTokensFailed));
     }
   }
 
@@ -301,7 +304,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ValidationException catch (e) {
       return Left(ValidationFailure(message: e.message));
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorUpdateProfileFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorUpdateProfileFailed));
     }
   }
 
@@ -334,7 +338,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ValidationException catch (e) {
       return Left(ValidationFailure(message: e.message));
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.errorVerifyEmailFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.errorVerifyEmailFailed));
     }
   }
 
@@ -352,8 +357,8 @@ class AuthRepositoryImpl implements AuthRepository {
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
     } on AuthenticationException {
-      return const Left(
-          AuthenticationFailure(message: AppStrings.errorCurrentPasswordIncorrect));
+      return const Left(AuthenticationFailure(
+          message: AppStrings.errorCurrentPasswordIncorrect));
     } on ValidationException catch (e) {
       return Left(ValidationFailure(message: e.message));
     } catch (e) {
@@ -367,8 +372,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       // Check if biometric is enabled
       if (!await localDataSource.isBiometricEnabled()) {
-        return const Left(AuthenticationFailure(
-            message: AppStrings.biometricNotEnabled));
+        return const Left(
+            AuthenticationFailure(message: AppStrings.biometricNotEnabled));
       }
 
       // Authenticate using biometric
@@ -381,21 +386,22 @@ class AuthRepositoryImpl implements AuthRepository {
       // Get stored credentials
       final credentials = await localDataSource.getBiometricCredentials();
       if (credentials == null) {
-        return const Left(
-            AuthenticationFailure(message: AppStrings.biometricNoStoredCredentials));
+        return const Left(AuthenticationFailure(
+            message: AppStrings.biometricNoStoredCredentials));
       }
 
       // Parse credentials (assuming format: email:password)
       final parts = credentials.split(':');
       if (parts.length != 2) {
-        return const Left(
-            AuthenticationFailure(message: AppStrings.biometricInvalidStoredCredentials));
+        return const Left(AuthenticationFailure(
+            message: AppStrings.biometricInvalidStoredCredentials));
       }
 
       // Login with stored credentials
       return login(email: parts[0], password: parts[1]);
     } catch (e) {
-      return const Left(UnexpectedFailure(message: AppStrings.biometricLoginFailed));
+      return const Left(
+          UnexpectedFailure(message: AppStrings.biometricLoginFailed));
     }
   }
 
@@ -405,15 +411,15 @@ class AuthRepositoryImpl implements AuthRepository {
       // Check if biometric is available
       final isAvailable = await biometricService.isAvailable();
       if (!isAvailable) {
-        return const Left(ValidationFailure(
-            message: AppStrings.biometricNotAvailable));
+        return const Left(
+            ValidationFailure(message: AppStrings.biometricNotAvailable));
       }
 
       // Get current user
       final userResult = await getCurrentUser();
       if (userResult.isLeft()) {
-        return const Left(
-            AuthenticationFailure(message: AppStrings.errorUserNotAuthenticated));
+        return const Left(AuthenticationFailure(
+            message: AppStrings.errorUserNotAuthenticated));
       }
 
       // TODO For now, we'll need to prompt for password to enable biometric

@@ -4,6 +4,10 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:delivery_app/core/network/api_client.dart';
+import 'package:delivery_app/core/security/certificate_pinner.dart';
+import 'package:delivery_app/core/security/data_obfuscator.dart';
+import 'package:delivery_app/core/security/encryption_service.dart';
+import 'package:delivery_app/core/security/session_manager.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/oauth_local_data_source.dart';
@@ -13,6 +17,7 @@ import 'package:delivery_app/features/auth/data/repositories/auth_repository_imp
 import 'package:delivery_app/features/auth/data/repositories/oauth_repository_impl.dart';
 import 'package:delivery_app/features/auth/data/services/biometric_service.dart';
 import 'package:delivery_app/features/auth/data/services/token_manager_impl.dart';
+import 'package:delivery_app/features/auth/domain/services/biometric_service.dart';
 import 'package:delivery_app/features/auth/domain/services/token_manager.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:delivery_app/features/auth/domain/repositories/oauth_repository.dart';
@@ -32,8 +37,35 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => LocalAuthentication());
   getIt.registerLazySingleton(() => Dio());
 
-  // Core
-  getIt.registerLazySingleton(() => ApiClient.development());
+  // Core - Security Services
+  getIt.registerLazySingleton<EncryptionService>(
+    () => EncryptionServiceImpl(storage: getIt<FlutterSecureStorage>()),
+  );
+
+  getIt.registerLazySingleton<DataObfuscator>(
+    () => DataObfuscatorImpl(),
+  );
+
+  getIt.registerLazySingleton<CertificatePinner>(
+    () => CertificatePinnerImpl(
+      certificates: CertificatePinningConfig.development().certificates,
+    ),
+  );
+
+  getIt.registerLazySingleton<SessionManager>(
+    () => SessionManagerImpl(
+      storage: getIt<FlutterSecureStorage>(),
+      sessionTimeout: SessionConfig.development.sessionTimeout,
+      warningThreshold: SessionConfig.development.warningThreshold,
+    ),
+  );
+
+  // Core - Network
+  getIt.registerLazySingleton(
+    () => ApiClient.development(
+      certificatePinner: getIt<CertificatePinner>(),
+    ),
+  );
 
   // Auth - Data Sources
   getIt.registerLazySingleton<AuthLocalDataSource>(

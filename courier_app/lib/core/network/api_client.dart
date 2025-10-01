@@ -2,6 +2,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../config/environment.dart';
+import '../security/certificate_pinner.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
@@ -11,6 +12,7 @@ import 'interceptors/request_interceptor.dart';
 class ApiClient {
   final Dio _dio;
   final AppEnvironment _config;
+  final CertificatePinner? _certificatePinner;
 
   String? _authToken;
   String? _refreshToken;
@@ -19,35 +21,40 @@ class ApiClient {
   ApiClient._({
     required Dio dio,
     required AppEnvironment config,
+    CertificatePinner? certificatePinner,
   })  : _dio = dio,
-        _config = config {
+        _config = config,
+        _certificatePinner = certificatePinner {
     _configureDio();
   }
 
   /// Factory constructor for development environment
-  factory ApiClient.development() {
+  factory ApiClient.development({CertificatePinner? certificatePinner}) {
     AppConfig.setEnvironment(Environment.development);
     return ApiClient._(
       dio: Dio(),
       config: AppConfig.config,
+      certificatePinner: certificatePinner,
     );
   }
 
   /// Factory constructor for staging environment
-  factory ApiClient.staging() {
+  factory ApiClient.staging({CertificatePinner? certificatePinner}) {
     AppConfig.setEnvironment(Environment.staging);
     return ApiClient._(
       dio: Dio(),
       config: AppConfig.config,
+      certificatePinner: certificatePinner,
     );
   }
 
   /// Factory constructor for production environment
-  factory ApiClient.production() {
+  factory ApiClient.production({CertificatePinner? certificatePinner}) {
     AppConfig.setEnvironment(Environment.production);
     return ApiClient._(
       dio: Dio(),
       config: AppConfig.config,
+      certificatePinner: certificatePinner,
     );
   }
 
@@ -55,8 +62,13 @@ class ApiClient {
   factory ApiClient.custom({
     required Dio dio,
     required AppEnvironment config,
+    CertificatePinner? certificatePinner,
   }) =>
-      ApiClient._(dio: dio, config: config);
+      ApiClient._(
+        dio: dio,
+        config: config,
+        certificatePinner: certificatePinner,
+      );
 
   /// Get the base URL based on environment
   String get baseUrl => _config.apiBaseUrl;
@@ -67,6 +79,11 @@ class ApiClient {
 
   /// Configure Dio with base options and interceptors
   void _configureDio() {
+    // Configure certificate pinning if provided
+    if (_certificatePinner != null) {
+      _certificatePinner!.configureDio(_dio);
+    }
+
     // Set base options
     _dio.options = BaseOptions(
       baseUrl: _config.apiBaseUrl,
