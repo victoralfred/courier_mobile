@@ -56,6 +56,42 @@ class AppStrings {
       'Biometric authentication failed';
   static const String errorInvalidPhoneFormat = 'Invalid phone number format';
 
+  // Error Messages - Money/Currency
+  static const String errorMoneyNegativeAmount =
+      'Money amount cannot be negative';
+  static const String errorMoneyInvalidAmount = 'Invalid money amount';
+  static const String errorMoneyNegativeResult =
+      'Operation would result in negative amount';
+  static const String errorMoneyNegativeMultiplier =
+      'Multiplier cannot be negative';
+
+  // Error Messages - Coordinate/Location
+  static const String errorCoordinateInvalidLatitude =
+      'Invalid latitude value';
+  static const String errorCoordinateInvalidLongitude =
+      'Invalid longitude value';
+  static const String errorCoordinateOutsideNigeria =
+      'Coordinates are outside Nigeria';
+  static const String errorCoordinateLatitudeRange =
+      'Latitude must be between 4°N and 14°N (Nigeria bounds)';
+  static const String errorCoordinateLongitudeRange =
+      'Longitude must be between 3°E and 15°E (Nigeria bounds)';
+  static const String errorLocationEmptyAddress = 'Address cannot be empty';
+  static const String errorLocationEmptyCity = 'City cannot be empty';
+  static const String errorLocationEmptyState = 'State cannot be empty';
+
+  // Error Messages - Distance
+  static const String errorDistanceNegative = 'Distance cannot be negative';
+  static const String errorDistanceInvalid = 'Invalid distance value';
+
+  // Weight Error Messages
+  static const String errorWeightNegative = 'Weight cannot be negative';
+  static const String errorWeightInvalid = 'Invalid weight value';
+  static const String errorWeightNegativeResult =
+      'Operation would result in negative weight';
+  static const String errorWeightNegativeMultiplier =
+      'Multiplier cannot be negative';
+
   // Error Messages - Cache
   static const String errorCacheGeneral = 'Cache error occurred';
   static const String errorCacheExpired = 'Cache has expired';
