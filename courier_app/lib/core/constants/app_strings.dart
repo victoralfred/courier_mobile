@@ -92,6 +92,13 @@ class AppStrings {
   static const String errorWeightNegativeMultiplier =
       'Multiplier cannot be negative';
 
+  // OrderItem Error Messages
+  static const String errorOrderItemEmptyCategory = 'Category cannot be empty';
+  static const String errorOrderItemEmptyDescription =
+      'Description cannot be empty';
+  static const String errorOrderItemInvalidWeight =
+      'Weight must be greater than zero';
+
   // Error Messages - Cache
   static const String errorCacheGeneral = 'Cache error occurred';
   static const String errorCacheExpired = 'Cache has expired';
