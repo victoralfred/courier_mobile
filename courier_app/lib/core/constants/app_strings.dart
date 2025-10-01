@@ -99,6 +99,25 @@ class AppStrings {
   static const String errorOrderItemInvalidWeight =
       'Weight must be greater than zero';
 
+  // Driver Error Messages
+  static const String errorDriverEmptyFirstName = 'First name cannot be empty';
+  static const String errorDriverEmptyLastName = 'Last name cannot be empty';
+  static const String errorDriverEmptyEmail = 'Email cannot be empty';
+  static const String errorDriverInvalidEmail = 'Invalid email format';
+  static const String errorDriverEmptyPhone = 'Phone number cannot be empty';
+  static const String errorDriverInvalidPhone = 'Invalid Nigerian phone number';
+  static const String errorDriverEmptyLicenseNumber =
+      'License number cannot be empty';
+  static const String errorDriverInvalidRating = 'Rating must be between 0 and 5';
+
+  // VehicleInfo Error Messages
+  static const String errorVehicleEmptyPlate = 'Vehicle plate cannot be empty';
+  static const String errorVehicleEmptyMake = 'Vehicle make cannot be empty';
+  static const String errorVehicleEmptyModel = 'Vehicle model cannot be empty';
+  static const String errorVehicleInvalidYear =
+      'Vehicle year must be between 1990 and current year';
+  static const String errorVehicleEmptyColor = 'Vehicle color cannot be empty';
+
   // Error Messages - Cache
   static const String errorCacheGeneral = 'Cache error occurred';
   static const String errorCacheExpired = 'Cache has expired';
