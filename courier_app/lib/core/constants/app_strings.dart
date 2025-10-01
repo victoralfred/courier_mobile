@@ -70,6 +70,7 @@ class AppStrings {
   static const String errorTokenRefreshFailed =
       'Failed to refresh authentication token';
   static const String errorCsrfTokenFailed = 'Failed to obtain CSRF token';
+  static const String errorCsrfTokenNotFound = 'CSRF token not found in response';
 
   // Error Codes - Authentication
   static const String errorCodeNoToken = 'NO_TOKEN';

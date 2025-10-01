@@ -3,7 +3,9 @@ import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../config/environment.dart';
 import '../security/certificate_pinner.dart';
+import 'csrf_token_manager.dart';
 import 'interceptors/auth_interceptor.dart';
+import 'interceptors/csrf_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
 import 'interceptors/request_interceptor.dart';
@@ -13,48 +15,62 @@ class ApiClient {
   final Dio _dio;
   final AppEnvironment _config;
   final CertificatePinner? _certificatePinner;
+  final CsrfTokenManager? _csrfTokenManager;
 
   String? _authToken;
   String? _refreshToken;
-  String? _csrfToken;
 
   ApiClient._({
     required Dio dio,
     required AppEnvironment config,
     CertificatePinner? certificatePinner,
+    CsrfTokenManager? csrfTokenManager,
   })  : _dio = dio,
         _config = config,
-        _certificatePinner = certificatePinner {
+        _certificatePinner = certificatePinner,
+        _csrfTokenManager = csrfTokenManager {
     _configureDio();
   }
 
   /// Factory constructor for development environment
-  factory ApiClient.development({CertificatePinner? certificatePinner}) {
+  factory ApiClient.development({
+    CertificatePinner? certificatePinner,
+    CsrfTokenManager? csrfTokenManager,
+  }) {
     AppConfig.setEnvironment(Environment.development);
     return ApiClient._(
       dio: Dio(),
       config: AppConfig.config,
       certificatePinner: certificatePinner,
+      csrfTokenManager: csrfTokenManager,
     );
   }
 
   /// Factory constructor for staging environment
-  factory ApiClient.staging({CertificatePinner? certificatePinner}) {
+  factory ApiClient.staging({
+    CertificatePinner? certificatePinner,
+    CsrfTokenManager? csrfTokenManager,
+  }) {
     AppConfig.setEnvironment(Environment.staging);
     return ApiClient._(
       dio: Dio(),
       config: AppConfig.config,
       certificatePinner: certificatePinner,
+      csrfTokenManager: csrfTokenManager,
     );
   }
 
   /// Factory constructor for production environment
-  factory ApiClient.production({CertificatePinner? certificatePinner}) {
+  factory ApiClient.production({
+    CertificatePinner? certificatePinner,
+    CsrfTokenManager? csrfTokenManager,
+  }) {
     AppConfig.setEnvironment(Environment.production);
     return ApiClient._(
       dio: Dio(),
       config: AppConfig.config,
       certificatePinner: certificatePinner,
+      csrfTokenManager: csrfTokenManager,
     );
   }
 
@@ -63,11 +79,13 @@ class ApiClient {
     required Dio dio,
     required AppEnvironment config,
     CertificatePinner? certificatePinner,
+    CsrfTokenManager? csrfTokenManager,
   }) =>
       ApiClient._(
         dio: dio,
         config: config,
         certificatePinner: certificatePinner,
+        csrfTokenManager: csrfTokenManager,
       );
 
   /// Get the base URL based on environment
@@ -98,17 +116,36 @@ class ApiClient {
     );
 
     // Add interceptors
-    _dio.interceptors.addAll([
+    final interceptors = [
       RequestInterceptor(),
       AuthInterceptor(
         getAuthToken: () => _authToken,
-        getCsrfToken: () => _csrfToken,
+        getCsrfToken: () => null, // Deprecated - using CsrfInterceptor instead
       ),
+    ];
+
+    // Add CSRF interceptor if manager is provided
+    if (_csrfTokenManager != null) {
+      interceptors.add(
+        CsrfInterceptor(
+          csrfTokenManager: _csrfTokenManager!,
+          excludedPaths: [
+            '/api/v1/users/auth',
+            '/api/v1/users/refresh',
+            '/api/v1/auth/csrf',
+          ],
+        ),
+      );
+    }
+
+    interceptors.addAll([
       LoggingInterceptor(isDebug: _config.enableLogging),
       ErrorInterceptor(
         onTokenExpired: _handleTokenExpired,
       ),
     ]);
+
+    _dio.interceptors.addAll(interceptors);
   }
 
   /// Set the authentication token
@@ -119,16 +156,12 @@ class ApiClient {
     }
   }
 
-  /// Set the CSRF token
-  void setCsrfToken(String? token) {
-    _csrfToken = token;
-  }
-
   /// Clear all tokens
   void clearTokens() {
     _authToken = null;
     _refreshToken = null;
-    _csrfToken = null;
+    // Clear CSRF cache when tokens are cleared
+    _csrfTokenManager?.clearCache();
   }
 
   /// Handle token expiration (retry with refresh)

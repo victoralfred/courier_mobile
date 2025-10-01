@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:delivery_app/core/network/api_client.dart';
+import 'package:delivery_app/core/network/csrf_token_manager.dart';
 import 'package:delivery_app/core/security/certificate_pinner.dart';
 import 'package:delivery_app/core/security/data_obfuscator.dart';
 import 'package:delivery_app/core/security/encryption_service.dart';
@@ -61,9 +62,17 @@ Future<void> init() async {
   );
 
   // Core - Network
+  // Create a separate Dio instance for CSRF token manager
+  final csrfDio = Dio();
+  getIt.registerLazySingleton<CsrfTokenManager>(
+    () => CsrfTokenManager(dio: csrfDio),
+  );
+
+  // API Client with CSRF support
   getIt.registerLazySingleton(
     () => ApiClient.development(
       certificatePinner: getIt<CertificatePinner>(),
+      csrfTokenManager: getIt<CsrfTokenManager>(),
     ),
   );
 

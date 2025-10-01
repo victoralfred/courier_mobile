@@ -380,9 +380,6 @@ void main() {
       when(mockApiClient.setAuthToken(any))
           .thenReturn(null);
 
-      when(mockApiClient.setCsrfToken(any))
-          .thenReturn(null);
-
       // Act
       final result = await tokenManager.storeToken(tValidToken);
 
@@ -390,7 +387,7 @@ void main() {
       expect(result, const Right(unit));
       verify(mockLocalDataSource.storeToken(tValidToken));
       verify(mockApiClient.setAuthToken(tValidToken.authorizationHeader));
-      verify(mockApiClient.setCsrfToken(tValidToken.csrfToken));
+      // Note: CSRF tokens are now managed automatically by CsrfInterceptor
     });
   });
 
