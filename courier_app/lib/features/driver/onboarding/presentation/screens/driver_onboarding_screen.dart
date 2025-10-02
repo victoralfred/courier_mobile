@@ -63,9 +63,32 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
           ),
           child: Stepper(
             currentStep: _currentStep,
-            onStepContinue: _onStepContinue,
+            onStepContinue: _currentStep == 3 ? null : _onStepContinue,
             onStepCancel: _onStepCancel,
             onStepTapped: (step) => setState(() => _currentStep = step),
+            controlsBuilder: (context, details) {
+              // Hide controls on last step (has custom submit button)
+              if (_currentStep == 3) {
+                return const SizedBox.shrink();
+              }
+              return Padding(
+                padding: const EdgeInsets.only(top: 16),
+                child: Row(
+                  children: [
+                    ElevatedButton(
+                      onPressed: details.onStepContinue,
+                      child: const Text('Continue'),
+                    ),
+                    const SizedBox(width: 8),
+                    if (_currentStep > 0)
+                      TextButton(
+                        onPressed: details.onStepCancel,
+                        child: const Text('Back'),
+                      ),
+                  ],
+                ),
+              );
+            },
             steps: [
               Step(
                 title: const Text('Personal Information'),
@@ -351,6 +374,47 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       );
 
   void _onStepContinue() {
+    // Validate current step before continuing
+    if (_currentStep == 0) {
+      // Step 0: Personal Info
+      if (_licenseController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter your driver license number'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    } else if (_currentStep == 1) {
+      // Step 1: Vehicle Info
+      if (_vehicleMakeController.text.trim().isEmpty ||
+          _vehicleModelController.text.trim().isEmpty ||
+          _vehiclePlateController.text.trim().isEmpty ||
+          _vehicleYearController.text.trim().isEmpty ||
+          _vehicleColorController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please fill in all vehicle information'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      // Validate year is a number
+      final year = int.tryParse(_vehicleYearController.text.trim());
+      if (year == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Please enter a valid vehicle year'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+    }
+
     if (_currentStep < 3) {
       setState(() {
         _currentStep++;
