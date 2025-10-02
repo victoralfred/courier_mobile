@@ -84,6 +84,17 @@ class Coordinate extends Equatable {
       longitude >= minLongitude &&
       longitude <= maxLongitude;
 
+  /// Check if coordinate is within Nigeria's geographic bounds
+  ///
+  /// Nigeria's approximate boundaries:
+  /// - Latitude: 4°N to 14°N
+  /// - Longitude: 3°E to 15°E
+  bool get isWithinNigeria =>
+      latitude >= 4.0 &&
+      latitude <= 14.0 &&
+      longitude >= 3.0 &&
+      longitude <= 15.0;
+
   /// Calculate distance to another coordinate using Haversine formula
   ///
   /// Returns distance in Distance value object

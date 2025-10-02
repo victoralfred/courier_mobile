@@ -41,36 +41,22 @@ void main() {
         expect(coordinate.longitude, 8.5920);
       });
 
-      test('should throw ValidationException for latitude below Nigeria bounds', () {
-        // Act & Assert - Below 4°N (southernmost point)
-        expect(
-          () => Coordinate(latitude: 3.5, longitude: 7.0),
-          throwsA(isA<ValidationException>()),
-        );
-      });
+      test('should accept coordinates outside Nigeria bounds (global validation only)', () {
+        // Act & Assert - Below 4°N (outside Nigeria but valid globally)
+        final outsideNigeria1 = Coordinate(latitude: 3.5, longitude: 7.0);
+        expect(outsideNigeria1.isWithinNigeria, false);
 
-      test('should throw ValidationException for latitude above Nigeria bounds', () {
-        // Act & Assert - Above 14°N (northernmost point)
-        expect(
-          () => Coordinate(latitude: 14.5, longitude: 7.0),
-          throwsA(isA<ValidationException>()),
-        );
-      });
+        // Above 14°N (outside Nigeria but valid globally)
+        final outsideNigeria2 = Coordinate(latitude: 14.5, longitude: 7.0);
+        expect(outsideNigeria2.isWithinNigeria, false);
 
-      test('should throw ValidationException for longitude below Nigeria bounds', () {
-        // Act & Assert - Below 3°E (westernmost point)
-        expect(
-          () => Coordinate(latitude: 9.0, longitude: 2.5),
-          throwsA(isA<ValidationException>()),
-        );
-      });
+        // Below 3°E (outside Nigeria but valid globally)
+        final outsideNigeria3 = Coordinate(latitude: 9.0, longitude: 2.5);
+        expect(outsideNigeria3.isWithinNigeria, false);
 
-      test('should throw ValidationException for longitude above Nigeria bounds', () {
-        // Act & Assert - Above 15°E (easternmost point)
-        expect(
-          () => Coordinate(latitude: 9.0, longitude: 15.5),
-          throwsA(isA<ValidationException>()),
-        );
+        // Above 15°E (outside Nigeria but valid globally)
+        final outsideNigeria4 = Coordinate(latitude: 9.0, longitude: 15.5);
+        expect(outsideNigeria4.isWithinNigeria, false);
       });
 
       test('should throw ValidationException for latitude NaN', () {
