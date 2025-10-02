@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:delivery_app/core/database/app_database.dart';
 import 'package:delivery_app/core/network/api_client.dart';
 import 'package:delivery_app/core/network/csrf_token_manager.dart';
 import 'package:delivery_app/core/security/certificate_pinner.dart';
@@ -26,6 +27,10 @@ import 'package:delivery_app/features/auth/domain/usecases/login.dart';
 import 'package:delivery_app/features/auth/domain/usecases/register.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_bloc.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/registration/registration_bloc.dart';
+import 'package:delivery_app/features/drivers/data/repositories/driver_repository_impl.dart';
+import 'package:delivery_app/features/drivers/domain/repositories/driver_repository.dart';
+import 'package:delivery_app/features/orders/data/repositories/order_repository_impl.dart';
+import 'package:delivery_app/features/orders/domain/repositories/order_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -37,6 +42,9 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => const FlutterSecureStorage());
   getIt.registerLazySingleton(() => LocalAuthentication());
   getIt.registerLazySingleton(() => Dio());
+
+  // Core - Database
+  getIt.registerLazySingleton<AppDatabase>(() => AppDatabase());
 
   // Core - Security Services
   getIt.registerLazySingleton<EncryptionService>(
@@ -129,6 +137,16 @@ Future<void> init() async {
       remoteDataSource: getIt(),
       localDataSource: getIt(),
     ),
+  );
+
+  // Driver - Repositories
+  getIt.registerLazySingleton<DriverRepository>(
+    () => DriverRepositoryImpl(database: getIt<AppDatabase>()),
+  );
+
+  // Order - Repositories
+  getIt.registerLazySingleton<OrderRepository>(
+    () => OrderRepositoryImpl(database: getIt<AppDatabase>()),
   );
 
   // Auth - Use Cases
