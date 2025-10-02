@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:delivery_app/core/database/app_database.dart';
+import 'package:delivery_app/core/database/extensions/order_table_extensions.dart';
 import 'package:delivery_app/core/error/failures.dart';
 import 'package:delivery_app/features/orders/data/mappers/order_mapper.dart';
 import 'package:delivery_app/features/orders/domain/entities/order.dart'
@@ -189,13 +191,16 @@ class OrderRepositoryImpl implements OrderRepository {
         item: itemData,
       );
 
-      // TODO: Queue for sync when network is available
-      // await _queueSyncOperation(
-      //   entityType: 'order',
-      //   entityId: order.id,
-      //   operation: 'create',
-      //   payload: jsonEncode({'order': orderData.toJson(), 'item': itemData.toJson()}),
-      // );
+      // Queue for sync when network is available
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'order',
+        entityId: order.id,
+        operation: 'create',
+        payload: jsonEncode({
+          'endpoint': 'POST /api/v1/orders',
+          'data': orderData.toCreateJson(item: itemData),
+        }),
+      );
 
       return Right(order);
     } catch (e) {
@@ -213,7 +218,20 @@ class OrderRepositoryImpl implements OrderRepository {
       // Update in local database
       await _database.orderDao.updateOrder(orderData);
 
-      // TODO: Queue for sync when network is available
+      // Note: Generic order updates are typically handled through specific
+      // endpoints (status, assign, cancel). This method is mainly for
+      // updating local cache when fetching from server.
+      // If a generic PUT /api/v1/orders/:id endpoint exists, uncomment below:
+      //
+      // await _database.syncQueueDao.addToQueue(
+      //   entityType: 'order',
+      //   entityId: order.id,
+      //   operation: 'update',
+      //   payload: jsonEncode({
+      //     'endpoint': 'PUT /api/v1/orders/${order.id}',
+      //     'data': orderData.toJsonMap(),
+      //   }),
+      // );
 
       return Right(order);
     } catch (e) {
@@ -242,10 +260,29 @@ class OrderRepositoryImpl implements OrderRepository {
         cancelledAt: cancelledAt,
       );
 
+      // Queue for sync when network is available
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'order',
+        entityId: orderId,
+        operation: 'update_status',
+        payload: jsonEncode({
+          'endpoint': 'PUT /api/v1/orders/$orderId/status',
+          'data': {
+            'status': status.name,
+            if (pickupStartedAt != null)
+              'pickupStartedAt': pickupStartedAt.toIso8601String(),
+            if (pickupCompletedAt != null)
+              'pickupCompletedAt': pickupCompletedAt.toIso8601String(),
+            if (completedAt != null)
+              'completedAt': completedAt.toIso8601String(),
+            if (cancelledAt != null)
+              'cancelledAt': cancelledAt.toIso8601String(),
+          },
+        }),
+      );
+
       // Get updated order
       final result = await getOrderById(orderId);
-
-      // TODO: Queue for sync when network is available
 
       return result;
     } catch (e) {
@@ -266,10 +303,19 @@ class OrderRepositoryImpl implements OrderRepository {
         driverId: driverId,
       );
 
+      // Queue for sync when network is available
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'order',
+        entityId: orderId,
+        operation: 'assign_driver',
+        payload: jsonEncode({
+          'endpoint': 'PUT /api/v1/orders/$orderId/assign',
+          'data': {'driverId': driverId},
+        }),
+      );
+
       // Get updated order
       final result = await getOrderById(orderId);
-
-      // TODO: Queue for sync when network is available
 
       return result;
     } catch (e) {
@@ -284,13 +330,17 @@ class OrderRepositoryImpl implements OrderRepository {
       // Delete from local database (transaction handles order + item)
       await _database.orderDao.deleteOrder(orderId);
 
-      // TODO: Queue for sync when network is available
-      // await _queueSyncOperation(
-      //   entityType: 'order',
-      //   entityId: orderId,
-      //   operation: 'delete',
-      //   payload: jsonEncode({'id': orderId}),
-      // );
+      // Queue for sync when network is available
+      // Note: Backend uses POST /api/v1/orders/:id/cancel for order cancellation
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'order',
+        entityId: orderId,
+        operation: 'cancel',
+        payload: jsonEncode({
+          'endpoint': 'POST /api/v1/orders/$orderId/cancel',
+          'data': {'reason': 'Cancelled by user'},
+        }),
+      );
 
       return const Right(true);
     } catch (e) {

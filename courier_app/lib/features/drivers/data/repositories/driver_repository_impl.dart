@@ -1,5 +1,7 @@
+import 'dart:convert';
 import 'package:dartz/dartz.dart';
 import 'package:delivery_app/core/database/app_database.dart';
+import 'package:delivery_app/core/database/extensions/driver_table_extensions.dart';
 import 'package:delivery_app/core/domain/value_objects/coordinate.dart';
 import 'package:delivery_app/core/error/failures.dart';
 import 'package:delivery_app/features/drivers/data/mappers/driver_mapper.dart';
@@ -64,16 +66,36 @@ class DriverRepositoryImpl implements DriverRepository {
       // Convert domain entity to database model
       final driverData = DriverMapper.toDatabase(driver);
 
+      // Check if driver already exists
+      final existing = await _database.driverDao.getDriverById(driver.id);
+
       // Save to local database
       await _database.driverDao.upsertDriver(driverData);
 
-      // TODO: Queue for sync when network is available
-      // await _queueSyncOperation(
-      //   entityType: 'driver',
-      //   entityId: driver.id,
-      //   operation: 'upsert',
-      //   payload: jsonEncode(driverData.toJson()),
-      // );
+      // Queue for sync when network is available
+      if (existing == null) {
+        // New driver - queue CREATE operation (register)
+        await _database.syncQueueDao.addToQueue(
+          entityType: 'driver',
+          entityId: driver.id,
+          operation: 'create',
+          payload: jsonEncode({
+            'endpoint': 'POST /api/v1/drivers/register',
+            'data': driverData.toRegistrationJson(),
+          }),
+        );
+      } else {
+        // Existing driver - queue UPDATE operation
+        await _database.syncQueueDao.addToQueue(
+          entityType: 'driver',
+          entityId: driver.id,
+          operation: 'update',
+          payload: jsonEncode({
+            'endpoint': 'PUT /api/v1/drivers/${driver.id}',
+            'data': driverData.toUpdateJson(),
+          }),
+        );
+      }
 
       return Right(driver);
     } catch (e) {
@@ -94,7 +116,9 @@ class DriverRepositoryImpl implements DriverRepository {
       // Get updated driver
       final result = await getDriverById(driverId);
 
-      // TODO: Queue for sync when network is available
+      // Note: Status updates (approve/reject) are typically admin actions
+      // and may not need to sync from mobile app. If needed, implement
+      // PUT /api/v1/drivers/:driverId/status endpoint on backend.
 
       return result;
     } catch (e) {
@@ -112,10 +136,19 @@ class DriverRepositoryImpl implements DriverRepository {
       // Update in local database
       await _database.driverDao.updateAvailability(driverId, availability.name);
 
+      // Queue for sync when network is available
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'driver',
+        entityId: driverId,
+        operation: 'update_availability',
+        payload: jsonEncode({
+          'endpoint': 'PUT /api/v1/drivers/$driverId/availability',
+          'data': {'availability': availability.name},
+        }),
+      );
+
       // Get updated driver
       final result = await getDriverById(driverId);
-
-      // TODO: Queue for sync when network is available
 
       return result;
     } catch (e) {
@@ -137,10 +170,23 @@ class DriverRepositoryImpl implements DriverRepository {
         longitude: location.longitude,
       );
 
+      // Queue for sync when network is available
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'driver',
+        entityId: driverId,
+        operation: 'update_location',
+        payload: jsonEncode({
+          'endpoint': 'PUT /api/v1/drivers/$driverId/location',
+          'data': {
+            'latitude': location.latitude,
+            'longitude': location.longitude,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
       // Get updated driver
       final result = await getDriverById(driverId);
-
-      // TODO: Queue for sync when network is available
 
       return result;
     } catch (e) {
@@ -155,10 +201,24 @@ class DriverRepositoryImpl implements DriverRepository {
       // Clear location in local database
       await _database.driverDao.clearLocation(driverId);
 
+      // Queue for sync when network is available
+      // Clearing location is essentially setting it to null
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'driver',
+        entityId: driverId,
+        operation: 'update_location',
+        payload: jsonEncode({
+          'endpoint': 'PUT /api/v1/drivers/$driverId/location',
+          'data': {
+            'latitude': null,
+            'longitude': null,
+            'timestamp': DateTime.now().toIso8601String(),
+          },
+        }),
+      );
+
       // Get updated driver
       final result = await getDriverById(driverId);
-
-      // TODO: Queue for sync when network is available
 
       return result;
     } catch (e) {
@@ -184,7 +244,9 @@ class DriverRepositoryImpl implements DriverRepository {
       // Get updated driver
       final result = await getDriverById(driverId);
 
-      // TODO: Queue for sync when network is available
+      // Note: Ratings are typically calculated server-side based on customer reviews
+      // and should not be directly updated from mobile app. This method is mainly
+      // for updating local cache when fetching from server.
 
       return result;
     } catch (e) {
@@ -214,13 +276,16 @@ class DriverRepositoryImpl implements DriverRepository {
       // Delete from local database
       await _database.driverDao.deleteDriver(driverId);
 
-      // TODO: Queue for sync when network is available
-      // await _queueSyncOperation(
-      //   entityType: 'driver',
-      //   entityId: driverId,
-      //   operation: 'delete',
-      //   payload: jsonEncode({'id': driverId}),
-      // );
+      // Queue for sync when network is available
+      await _database.syncQueueDao.addToQueue(
+        entityType: 'driver',
+        entityId: driverId,
+        operation: 'delete',
+        payload: jsonEncode({
+          'endpoint': 'DELETE /api/v1/drivers/$driverId',
+          'data': null,
+        }),
+      );
 
       return const Right(true);
     } catch (e) {

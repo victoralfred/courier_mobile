@@ -1,7 +1,10 @@
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/error/failures.dart';
+import '../../features/auth/domain/entities/user.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/presentation/blocs/login/login_bloc.dart';
 import '../../features/auth/presentation/blocs/registration/registration_bloc.dart';
@@ -11,6 +14,11 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/customer/presentation/screens/customer_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/onboarding/presentation/screens/driver_onboarding_screen.dart';
+import '../../features/orders/presentation/blocs/order/order_bloc.dart';
+import '../../features/orders/presentation/screens/create_order_screen.dart';
+import '../../features/orders/presentation/screens/order_tracking_screen.dart';
+import '../../features/orders/presentation/screens/available_orders_screen.dart';
+import '../../features/orders/presentation/screens/active_delivery_screen.dart';
 import 'route_guards.dart';
 import 'route_names.dart';
 import 'splash_screen.dart';
@@ -89,8 +97,26 @@ class AppRouter {
                 GoRoute(
                   path: 'create',
                   name: RouteNames.customerCreateOrder,
-                  builder: (context, state) => const Scaffold(
-                    body: Center(child: Text('Create Order')),
+                  builder: (context, state) =>
+                      FutureBuilder<Either<Failure, User>>(
+                    future: authRepository.getCurrentUser(),
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Scaffold(
+                          body: Center(child: CircularProgressIndicator()),
+                        );
+                      }
+                      final userResult = snapshot.data;
+                      final userId = userResult?.fold<String>(
+                            (failure) => '',
+                            (user) => user.id.value,
+                          ) ??
+                          '';
+                      return BlocProvider(
+                        create: (_) => GetIt.instance<OrderBloc>(),
+                        child: CreateOrderScreen(userId: userId),
+                      );
+                    },
                   ),
                 ),
                 GoRoute(
@@ -108,8 +134,9 @@ class AppRouter {
                       name: RouteNames.customerTrackOrder,
                       builder: (context, state) {
                         final orderId = state.pathParameters['orderId']!;
-                        return Scaffold(
-                          body: Center(child: Text('Track Order: $orderId')),
+                        return BlocProvider(
+                          create: (_) => GetIt.instance<OrderBloc>(),
+                          child: OrderTrackingScreen(orderId: orderId),
                         );
                       },
                     ),
@@ -158,8 +185,25 @@ class AppRouter {
             GoRoute(
               path: 'deliveries',
               name: RouteNames.driverDeliveries,
-              builder: (context, state) => const Scaffold(
-                body: Center(child: Text('Driver Deliveries')),
+              builder: (context, state) => FutureBuilder<Either<Failure, User>>(
+                future: authRepository.getCurrentUser(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Scaffold(
+                      body: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  final userResult = snapshot.data;
+                  final driverId = userResult?.fold<String>(
+                        (failure) => '',
+                        (user) => user.id.value,
+                      ) ??
+                      '';
+                  return BlocProvider(
+                    create: (_) => GetIt.instance<OrderBloc>(),
+                    child: AvailableOrdersScreen(driverId: driverId),
+                  );
+                },
               ),
               routes: [
                 GoRoute(
@@ -167,9 +211,29 @@ class AppRouter {
                   name: RouteNames.driverDeliveryDetails,
                   builder: (context, state) {
                     final deliveryId = state.pathParameters['deliveryId']!;
-                    return Scaffold(
-                      body:
-                          Center(child: Text('Delivery Details: $deliveryId')),
+                    return FutureBuilder<Either<Failure, User>>(
+                      future: authRepository.getCurrentUser(),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState ==
+                            ConnectionState.waiting) {
+                          return const Scaffold(
+                            body: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        final userResult = snapshot.data;
+                        final driverId = userResult?.fold<String>(
+                              (failure) => '',
+                              (user) => user.id.value,
+                            ) ??
+                            '';
+                        return BlocProvider(
+                          create: (_) => GetIt.instance<OrderBloc>(),
+                          child: ActiveDeliveryScreen(
+                            orderId: deliveryId,
+                            driverId: driverId,
+                          ),
+                        );
+                      },
                     );
                   },
                 ),

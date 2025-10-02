@@ -1,15 +1,18 @@
 import 'package:get_it/get_it.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:delivery_app/core/database/app_database.dart';
 import 'package:delivery_app/core/network/api_client.dart';
+import 'package:delivery_app/core/network/connectivity_service.dart';
 import 'package:delivery_app/core/network/csrf_token_manager.dart';
 import 'package:delivery_app/core/security/certificate_pinner.dart';
 import 'package:delivery_app/core/security/data_obfuscator.dart';
 import 'package:delivery_app/core/security/encryption_service.dart';
 import 'package:delivery_app/core/security/session_manager.dart';
+import 'package:delivery_app/core/sync/sync_service.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/oauth_local_data_source.dart';
@@ -31,6 +34,7 @@ import 'package:delivery_app/features/drivers/data/repositories/driver_repositor
 import 'package:delivery_app/features/drivers/domain/repositories/driver_repository.dart';
 import 'package:delivery_app/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:delivery_app/features/orders/domain/repositories/order_repository.dart';
+import 'package:delivery_app/features/orders/presentation/blocs/order/order_bloc.dart';
 
 final getIt = GetIt.instance;
 
@@ -42,6 +46,7 @@ Future<void> init() async {
   getIt.registerLazySingleton(() => const FlutterSecureStorage());
   getIt.registerLazySingleton(() => LocalAuthentication());
   getIt.registerLazySingleton(() => Dio());
+  getIt.registerLazySingleton(() => Connectivity());
 
   // Core - Database
   getIt.registerLazySingleton<AppDatabase>(() => AppDatabase());
@@ -84,6 +89,21 @@ Future<void> init() async {
     ),
   );
 
+  // Core - Sync Services
+  getIt.registerLazySingleton<SyncService>(
+    () => SyncService(
+      database: getIt<AppDatabase>(),
+      apiClient: getIt<ApiClient>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<ConnectivityService>(
+    () => ConnectivityService(
+      connectivity: getIt<Connectivity>(),
+      syncService: getIt<SyncService>(),
+    ),
+  );
+
   // Auth - Data Sources
   getIt.registerLazySingleton<AuthLocalDataSource>(
     () => AuthLocalDataSourceImpl(
@@ -97,7 +117,8 @@ Future<void> init() async {
   );
 
   getIt.registerLazySingleton<OAuthLocalDataSource>(
-    () => OAuthLocalDataSourceImpl(secureStorage: getIt<FlutterSecureStorage>()),
+    () =>
+        OAuthLocalDataSourceImpl(secureStorage: getIt<FlutterSecureStorage>()),
   );
 
   getIt.registerLazySingleton<OAuthRemoteDataSource>(
@@ -105,7 +126,8 @@ Future<void> init() async {
   );
 
   getIt.registerLazySingleton<TokenLocalDataSource>(
-    () => TokenLocalDataSourceImpl(secureStorage: getIt<FlutterSecureStorage>()),
+    () =>
+        TokenLocalDataSourceImpl(secureStorage: getIt<FlutterSecureStorage>()),
   );
 
   // Auth - Services
@@ -167,6 +189,13 @@ Future<void> init() async {
     () => RegistrationBloc(
       authRepository: getIt<AuthRepository>(),
       registerUseCase: getIt<Register>(),
+    ),
+  );
+
+  // Order - BLoCs
+  getIt.registerFactory(
+    () => OrderBloc(
+      orderRepository: getIt<OrderRepository>(),
     ),
   );
 }

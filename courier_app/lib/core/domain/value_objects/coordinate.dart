@@ -4,27 +4,26 @@ import 'package:delivery_app/core/constants/app_strings.dart';
 import 'package:delivery_app/core/error/exceptions.dart';
 import 'package:delivery_app/core/domain/value_objects/distance.dart';
 
-/// Coordinate value object for Nigeria geographic locations
+/// Coordinate value object for geographic locations
 ///
 /// Immutable value object that ensures:
 /// - Latitude and longitude are valid numbers
-/// - Coordinates are within Nigeria geographic bounds
-/// - Latitude: 4°N to 14°N (approximate Nigeria bounds)
-/// - Longitude: 3°E to 15°E (approximate Nigeria bounds)
+/// - Latitude: -90° to 90° (standard geographic bounds)
+/// - Longitude: -180° to 180° (standard geographic bounds)
 ///
 /// Usage:
 /// ```dart
 /// final lagos = Coordinate(latitude: 6.5244, longitude: 3.3792);
-/// final abuja = Coordinate(latitude: 9.0765, longitude: 7.3986);
-/// final distance = lagos.distanceTo(abuja);
-/// print(distance.inKilometers); // ~481 km
+/// final newYork = Coordinate(latitude: 40.7128, longitude: -74.0060);
+/// final distance = lagos.distanceTo(newYork);
+/// print(distance.inKilometers); // Distance in km
 /// ```
 class Coordinate extends Equatable {
-  /// Nigeria geographic bounds (approximate)
-  static const double minLatitude = 4.0; // Southernmost point (~4°N)
-  static const double maxLatitude = 14.0; // Northernmost point (~14°N)
-  static const double minLongitude = 3.0; // Westernmost point (~3°E)
-  static const double maxLongitude = 15.0; // Easternmost point (~15°E)
+  /// Standard geographic bounds
+  static const double minLatitude = -90.0;
+  static const double maxLatitude = 90.0;
+  static const double minLongitude = -180.0;
+  static const double maxLongitude = 180.0;
 
   final double latitude;
   final double longitude;
@@ -34,11 +33,11 @@ class Coordinate extends Equatable {
     required this.longitude,
   });
 
-  /// Creates a Coordinate with validation for Nigeria bounds
+  /// Creates a Coordinate with validation for global bounds
   ///
   /// Throws [ValidationException] if:
   /// - Latitude or longitude is NaN or infinite
-  /// - Coordinates are outside Nigeria geographic bounds
+  /// - Coordinates are outside standard geographic bounds
   factory Coordinate({
     required double latitude,
     required double longitude,
@@ -59,27 +58,27 @@ class Coordinate extends Equatable {
       );
     }
 
-    // Validate Nigeria bounds - latitude
+    // Validate global bounds - latitude
     if (latitude < minLatitude || latitude > maxLatitude) {
       throw const ValidationException(
-        message: AppStrings.errorCoordinateLatitudeRange,
-        fieldErrors: {'latitude': AppStrings.errorCoordinateLatitudeRange},
+        message: 'Latitude must be between -90° and 90°',
+        fieldErrors: {'latitude': 'Latitude must be between -90° and 90°'},
       );
     }
 
-    // Validate Nigeria bounds - longitude
+    // Validate global bounds - longitude
     if (longitude < minLongitude || longitude > maxLongitude) {
       throw const ValidationException(
-        message: AppStrings.errorCoordinateLongitudeRange,
-        fieldErrors: {'longitude': AppStrings.errorCoordinateLongitudeRange},
+        message: 'Longitude must be between -180° and 180°',
+        fieldErrors: {'longitude': 'Longitude must be between -180° and 180°'},
       );
     }
 
     return Coordinate._(latitude: latitude, longitude: longitude);
   }
 
-  /// Check if coordinate is within Nigeria bounds
-  bool get isWithinNigeria =>
+  /// Check if coordinate is valid
+  bool get isValid =>
       latitude >= minLatitude &&
       latitude <= maxLatitude &&
       longitude >= minLongitude &&

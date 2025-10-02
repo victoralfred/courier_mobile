@@ -88,12 +88,13 @@ class Weight extends Equatable implements Comparable<Weight> {
     } else if (kilograms == 0) {
       return '0 g';
     } else {
-      return '${inGrams} g';
+      return '$inGrams g';
     }
   }
 
   /// Add two Weight values
-  Weight operator +(Weight other) => Weight(kilograms: kilograms + other.kilograms);
+  Weight operator +(Weight other) =>
+      Weight(kilograms: kilograms + other.kilograms);
 
   /// Subtract two Weight values
   ///
