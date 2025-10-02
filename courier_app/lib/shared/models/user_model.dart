@@ -9,6 +9,10 @@ import 'package:delivery_app/shared/domain/value_objects/phone_number.dart';
 /// This model is shared across features as user information is needed
 /// in customer, driver, and profile management features
 class UserModel extends User {
+  final String? accessToken;
+  final String? refreshToken;
+  final String? csrfToken;
+
   UserModel({
     required super.id,
     required super.firstName,
@@ -21,6 +25,9 @@ class UserModel extends User {
     super.customerData,
     required super.createdAt,
     required super.updatedAt,
+    this.accessToken,
+    this.refreshToken,
+    this.csrfToken,
   });
 
   /// Creates a UserModel from JSON data
@@ -53,6 +60,9 @@ class UserModel extends User {
           : (roleType == UserRoleType.customer ? const CustomerData() : null),
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
+      accessToken: json['access_token'] as String?,
+      refreshToken: json['refresh_token'] as String?,
+      csrfToken: json['csrf_token'] as String?,
     );
   }
 
@@ -127,5 +137,9 @@ class UserModel extends User {
         customerData: user.customerData,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
+        // Tokens are not part of the User entity, so they'll be null here
+        accessToken: null,
+        refreshToken: null,
+        csrfToken: null,
       );
 }

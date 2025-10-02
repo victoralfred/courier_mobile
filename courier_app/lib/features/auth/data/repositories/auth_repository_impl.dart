@@ -36,29 +36,32 @@ class AuthRepositoryImpl implements AuthRepository {
     required String password,
   }) async {
     try {
-      // Call remote data source to login
+      // Get the user model from remote data source
+      // The remote data source includes tokens in the UserModel
       final userModel = await remoteDataSource.login(
         email: email,
         password: password,
       );
+
+      // Extract tokens from userModel and save them
+      final accessToken = userModel.accessToken;
+      final refreshToken = userModel.refreshToken;
+      final csrfToken = userModel.csrfToken;
+
+      // Save tokens to local storage
+      if (accessToken != null && accessToken.isNotEmpty) {
+        await localDataSource.saveTokens(
+          accessToken: accessToken,
+          refreshToken: refreshToken,
+          csrfToken: csrfToken,
+        );
+      }
 
       // Cache the user locally
       await localDataSource.cacheUser(userModel);
 
       // Persist user data with role to secure storage
       await _userStorageService.saveUser(userModel);
-
-      // Save tokens separately for authentication checks
-      // The tokens are returned in the UserModel from the data source
-      // We'll extract them from the response if available
-      // TODO: Update when backend provides tokens in a standardized way
-      // For now, using placeholder token to enable authentication check
-      await localDataSource.saveTokens(
-        accessToken:
-            'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
-        refreshToken: null,
-        csrfToken: null,
-      );
 
       return Right(userModel);
     } on ServerException catch (e) {
