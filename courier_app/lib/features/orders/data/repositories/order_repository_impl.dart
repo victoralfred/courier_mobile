@@ -197,7 +197,7 @@ class OrderRepositoryImpl implements OrderRepository {
         entityId: order.id,
         operation: 'create',
         payload: jsonEncode({
-          'endpoint': 'POST /api/v1/orders',
+          'endpoint': 'POST /orders',
           'data': orderData.toCreateJson(item: itemData),
         }),
       );
@@ -266,7 +266,7 @@ class OrderRepositoryImpl implements OrderRepository {
         entityId: orderId,
         operation: 'update_status',
         payload: jsonEncode({
-          'endpoint': 'PUT /api/v1/orders/$orderId/status',
+          'endpoint': 'PUT /orders/$orderId/status',
           'data': {
             'status': status.name,
             if (pickupStartedAt != null)
@@ -309,7 +309,7 @@ class OrderRepositoryImpl implements OrderRepository {
         entityId: orderId,
         operation: 'assign_driver',
         payload: jsonEncode({
-          'endpoint': 'PUT /api/v1/orders/$orderId/assign',
+          'endpoint': 'PUT /orders/$orderId/assign',
           'data': {'driverId': driverId},
         }),
       );
@@ -331,13 +331,13 @@ class OrderRepositoryImpl implements OrderRepository {
       await _database.orderDao.deleteOrder(orderId);
 
       // Queue for sync when network is available
-      // Note: Backend uses POST /api/v1/orders/:id/cancel for order cancellation
+      // Note: Backend uses POST /orders/:id/cancel for order cancellation
       await _database.syncQueueDao.addToQueue(
         entityType: 'order',
         entityId: orderId,
         operation: 'cancel',
         payload: jsonEncode({
-          'endpoint': 'POST /api/v1/orders/$orderId/cancel',
+          'endpoint': 'POST /orders/$orderId/cancel',
           'data': {'reason': 'Cancelled by user'},
         }),
       );

@@ -80,7 +80,7 @@ class DriverRepositoryImpl implements DriverRepository {
           entityId: driver.id,
           operation: 'create',
           payload: jsonEncode({
-            'endpoint': 'POST /api/v1/drivers/register',
+            'endpoint': 'POST /drivers/register',
             'data': driverData.toRegistrationJson(),
           }),
         );
@@ -91,7 +91,7 @@ class DriverRepositoryImpl implements DriverRepository {
           entityId: driver.id,
           operation: 'update',
           payload: jsonEncode({
-            'endpoint': 'PUT /api/v1/drivers/${driver.id}',
+            'endpoint': 'PUT /drivers/${driver.id}',
             'data': driverData.toUpdateJson(),
           }),
         );
