@@ -4,42 +4,44 @@ import 'package:delivery_app/core/error/exceptions.dart';
 
 /// Manages CSRF tokens for API requests requiring CSRF protection
 ///
-/// Fetches CSRF tokens from the backend and caches them to avoid
-/// unnecessary API calls. Tokens are automatically refreshed when expired.
+/// Fetches fresh CSRF tokens from the backend for each mutating operation.
+/// CSRF tokens are ephemeral and not cached - each request gets a new token.
 class CsrfTokenManager {
   final Dio dio;
   final String? Function()? getAuthToken;
-  static const String _csrfEndpoint = '/api/v1/auth/csrf';
-  static const Duration _defaultCacheDuration = Duration(minutes: 10);
-
-  String? _cachedToken;
-  DateTime? _tokenExpiryTime;
-  final Duration _cacheDuration;
+  static const String _csrfEndpoint = '/auth/csrf';
 
   CsrfTokenManager({
     required this.dio,
     this.getAuthToken,
-    Duration? cacheDuration,
-  }) : _cacheDuration = cacheDuration ?? _defaultCacheDuration;
+  });
 
-  /// Get CSRF token, fetching from API if not cached or expired
+  /// Get CSRF token - fetches fresh token for each request
+  ///
+  /// CSRF tokens are ephemeral and should not be cached.
+  /// Each mutating operation should use a fresh CSRF token.
   ///
   /// Throws [ServerException] if API returns error
   /// Throws [NetworkException] if network connection fails
   Future<String> getToken() async {
-    // Return cached token if still valid
-    if (_isCacheValid()) {
-      return _cachedToken!;
-    }
-
-    // Fetch new token from API
+    // Fetch fresh token from API
     try {
       // Add auth token if available
       final authToken = getAuthToken?.call();
+      print('=== CSRF TOKEN MANAGER DEBUG ===');
+      print('Fetching new CSRF token from: $_csrfEndpoint');
+      print('Base URL: ${dio.options.baseUrl}');
+      print('Full URL: ${dio.options.baseUrl}$_csrfEndpoint');
+      print('Auth token available: ${authToken != null ? "YES (${authToken.substring(0, 20)}...)" : "NO"}');
+
       final options = Options();
       if (authToken != null && authToken.isNotEmpty) {
         options.headers = {'Authorization': 'Bearer $authToken'};
+        print('Added Authorization header to CSRF request');
+      } else {
+        print('⚠️  No auth token available for CSRF request!');
       }
+      print('================================');
 
       final response = await dio.get(_csrfEndpoint, options: options);
 
@@ -47,16 +49,16 @@ class CsrfTokenManager {
       final data = response.data;
       if (data is! Map<String, dynamic> ||
           data['data'] is! Map<String, dynamic> ||
-          data['data']['token'] is! String) {
+          data['data']['csrf_token'] is! String) {
         throw ServerException(
           message: AppStrings.errorCsrfTokenNotFound,
           code: response.statusCode?.toString(),
         );
       }
 
-      // Extract and cache token
-      final token = data['data']['token'] as String;
-      _cacheToken(token);
+      // Extract and return token (no caching - CSRF tokens are ephemeral)
+      final token = data['data']['csrf_token'] as String;
+      print('✅ Fresh CSRF token fetched');
 
       return token;
     } on ServerException {
@@ -103,33 +105,5 @@ class CsrfTokenManager {
     } catch (_) {
       return null;
     }
-  }
-
-  /// Clear the cached CSRF token
-  ///
-  /// Forces next [getToken] call to fetch a fresh token from the API
-  void clearCache() {
-    _cachedToken = null;
-    _tokenExpiryTime = null;
-  }
-
-  /// Check if there is a cached token available
-  ///
-  /// Returns true if token is cached and not expired
-  bool hasCachedToken() => _isCacheValid();
-
-  /// Cache the token with expiry time
-  void _cacheToken(String token) {
-    _cachedToken = token;
-    _tokenExpiryTime = DateTime.now().add(_cacheDuration);
-  }
-
-  /// Check if cached token is still valid
-  bool _isCacheValid() {
-    if (_cachedToken == null || _tokenExpiryTime == null) {
-      return false;
-    }
-
-    return DateTime.now().isBefore(_tokenExpiryTime!);
   }
 }

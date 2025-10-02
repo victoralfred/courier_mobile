@@ -75,17 +75,30 @@ class SyncService {
       final endpoint = payload['endpoint'] as String;
       final data = payload['data'] as Map<String, dynamic>?;
 
+      // Debug logging
+      debugPrint('=== SYNC SERVICE DEBUG ===');
+      debugPrint('Processing sync item: ${item.id}');
+      debugPrint('Endpoint: $endpoint');
+      debugPrint('Entity: ${item.entityType} - ${item.entityId}');
+      debugPrint('Operation: ${item.operation}');
+      debugPrint('Current auth token: ${_apiClient.getAuthToken() ?? "NO TOKEN"}');
+      debugPrint('Data being sent: ${jsonEncode(data)}');
+      debugPrint('========================');
+
       // Execute the appropriate HTTP request
       Response response;
 
       if (endpoint.startsWith('POST')) {
         final path = _extractPath(endpoint);
+        debugPrint('Making POST request to: $path');
         response = await _apiClient.post(path, data: data);
       } else if (endpoint.startsWith('PUT')) {
         final path = _extractPath(endpoint);
+        debugPrint('Making PUT request to: $path');
         response = await _apiClient.put(path, data: data);
       } else if (endpoint.startsWith('DELETE')) {
         final path = _extractPath(endpoint);
+        debugPrint('Making DELETE request to: $path');
         response = await _apiClient.delete(path, data: data);
       } else {
         throw Exception('Unsupported HTTP method in endpoint: $endpoint');

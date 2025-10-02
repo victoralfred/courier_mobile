@@ -31,10 +31,6 @@ abstract class AuthRepository {
   /// Returns [bool] on success or [Failure] on error
   Future<Either<Failure, bool>> logout();
 
-  /// Refreshes the authentication token
-  /// Returns [bool] on success or [Failure] on error
-  Future<Either<Failure, bool>> refreshToken();
-
   /// Checks if a user is currently authenticated
   /// Returns true if authenticated, false otherwise
   Future<bool> isAuthenticated();
@@ -42,20 +38,6 @@ abstract class AuthRepository {
   /// Gets the current access token
   /// Returns null if not authenticated
   Future<String?> getAccessToken();
-
-  /// Gets the CSRF token for write operations
-  /// Returns [String] on success or [Failure] on error
-  Future<Either<Failure, String>> getCsrfToken();
-
-  /// Saves authentication tokens securely
-  Future<Either<Failure, bool>> saveTokens({
-    required String accessToken,
-    String? refreshToken,
-    String? csrfToken,
-  });
-
-  /// Clears all authentication tokens
-  Future<Either<Failure, bool>> clearTokens();
 
   /// Updates the current user information
   /// Returns [User] on success or [Failure] on error

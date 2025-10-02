@@ -23,11 +23,16 @@ class CsrfInterceptor extends Interceptor {
   ) async {
     // Skip if path is excluded
     if (_isPathExcluded(options.path)) {
+      print('🔒 CSRF: Skipping excluded path: ${options.path}');
       return handler.next(options);
     }
 
     // Only add CSRF token for write operations
     if (_isWriteMethod(options.method)) {
+      print('=== CSRF INTERCEPTOR DEBUG ===');
+      print('Request: ${options.method} ${options.path}');
+      print('Using nullable getter: $useNullableGetter');
+
       try {
         // Fetch CSRF token
         final token = useNullableGetter
@@ -37,11 +42,16 @@ class CsrfInterceptor extends Interceptor {
         // Add to headers if token is available
         if (token != null && token.isNotEmpty) {
           options.headers['X-CSRF-Token'] = token;
+          print('✅ Added CSRF token to headers');
+        } else {
+          print('⚠️  No CSRF token available (token was null)');
         }
       } catch (e) {
+        print('❌ Failed to get CSRF token: $e');
         // Continue without CSRF token on error
         // The backend will reject the request if CSRF is required
       }
+      print('==============================');
     }
 
     handler.next(options);

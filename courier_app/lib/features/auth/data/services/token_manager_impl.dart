@@ -159,7 +159,7 @@ class TokenManagerImpl implements TokenManager {
         await localDataSource.storeToken(newToken);
 
         // Update API client with new token
-        apiClient.setAuthToken(newToken.token);
+        apiClient.setAuthToken(newToken.token, refreshToken: newToken.refreshToken);
 
         // Notify listeners
         _tokenRefreshController.add(newToken);
@@ -214,7 +214,7 @@ class TokenManagerImpl implements TokenManager {
 
       // Update API client with auth token
       // Note: CSRF tokens are now fetched automatically by CsrfInterceptor
-      apiClient.setAuthToken(token.authorizationHeader);
+      apiClient.setAuthToken(token.token, refreshToken: token.refreshToken);
 
       // Notify auth state change
       _authStateController.add(true);

@@ -167,6 +167,7 @@ Future<void> init() async {
       remoteDataSource: getIt(),
       localDataSource: getIt(),
       biometricService: getIt(),
+      tokenManager: getIt(),
     ),
   );
 

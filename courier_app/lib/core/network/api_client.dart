@@ -107,6 +107,7 @@ class ApiClient {
     _dio.interceptors.add(
       CsrfInterceptor(
         csrfTokenManager: manager,
+        useNullableGetter: true, // Use getTokenOrNull to avoid exceptions
         excludedPaths: [
           '/api/v1/users/auth',
           '/api/v1/users/refresh',
@@ -150,6 +151,7 @@ class ApiClient {
       interceptors.add(
         CsrfInterceptor(
           csrfTokenManager: _csrfTokenManager!,
+          useNullableGetter: true, // Use getTokenOrNull to avoid exceptions
           excludedPaths: [
             '/api/v1/users/auth',
             '/api/v1/users/refresh',
@@ -181,8 +183,7 @@ class ApiClient {
   void clearTokens() {
     _authToken = null;
     _refreshToken = null;
-    // Clear CSRF cache when tokens are cleared
-    _csrfTokenManager?.clearCache();
+    // Note: CSRF tokens are ephemeral and not cached, so no need to clear
   }
 
   /// Handle token expiration (retry with refresh)

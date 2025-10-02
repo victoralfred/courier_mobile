@@ -1,3 +1,6 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
+
 /// Environment configurations for different deployment stages
 abstract class Environment {
   static const String development = 'development';
@@ -42,21 +45,39 @@ class AppEnvironment {
   bool get isProduction => name == Environment.production;
 
   /// Development environment configuration
-  factory AppEnvironment.development() => const AppEnvironment(
+  factory AppEnvironment.development() {
+    // Determine the correct host based on platform
+    String host = '10.0.2.2'; // Default for Android emulator
+
+    try {
+      if (!kIsWeb && Platform.isLinux) {
+        host = 'localhost';
+      } else if (!kIsWeb && Platform.isMacOS) {
+        host = 'localhost';
+      } else if (!kIsWeb && Platform.isWindows) {
+        host = 'localhost';
+      }
+    } catch (e) {
+      // Platform check might fail in some contexts, default to Android emulator
+      host = '10.0.2.2';
+    }
+
+    return AppEnvironment(
         name: Environment.development,
-        apiBaseUrl: 'http://10.0.2.2:8080/api/v1',  // Use 10.0.2.2 for Android emulator
-        wsBaseUrl: 'ws://10.0.2.2:8080/ws',
+        apiBaseUrl: 'http://$host:8080/api/v1',
+        wsBaseUrl: 'ws://$host:8080/ws',
         enableLogging: true,
         enableCertificatePinning: false,
-        connectionTimeout: Duration(seconds: 30),
-        receiveTimeout: Duration(seconds: 30),
+        connectionTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
         maxRetryAttempts: 3,
-        retryDelay: Duration(seconds: 1),
+        retryDelay: const Duration(seconds: 1),
         enableCrashlytics: false,
         sentryDsn: '',
         googleMapsApiKey: 'YOUR_DEV_GOOGLE_MAPS_KEY',
         firebaseProjectId: 'courier-app-dev',
       );
+  }
 
   /// Staging environment configuration
   factory AppEnvironment.staging() => const AppEnvironment(

@@ -8,25 +8,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// Abstract interface for authentication local data operations
 abstract class AuthLocalDataSource {
-  /// Saves authentication tokens securely
-  Future<void> saveTokens({
-    required String accessToken,
-    String? refreshToken,
-    String? csrfToken,
-  });
-
-  /// Gets the current access token
-  Future<String?> getAccessToken();
-
-  /// Gets the current refresh token
-  Future<String?> getRefreshToken();
-
-  /// Gets the current CSRF token
-  Future<String?> getCsrfToken();
-
-  /// Clears all authentication tokens
-  Future<void> clearTokens();
-
   /// Caches the current user data
   Future<void> cacheUser(UserModel user);
 
@@ -74,9 +55,6 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final SharedPreferences _preferences;
 
   // Secure storage keys
-  static const String _accessTokenKey = 'access_token';
-  static const String _refreshTokenKey = 'refresh_token';
-  static const String _csrfTokenKey = 'csrf_token';
   static const String _biometricCredentialsKey = 'biometric_credentials';
 
   // Shared preferences keys
@@ -102,131 +80,6 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
     accessibility: KeychainAccessibility.first_unlock_this_device,
     accountName: 'CourierAppAuth',
   );
-
-  @override
-  Future<void> saveTokens({
-    required String accessToken,
-    String? refreshToken,
-    String? csrfToken,
-  }) async {
-    try {
-      await _secureStorage.write(
-        key: _accessTokenKey,
-        value: accessToken,
-        aOptions: _androidOptions,
-        iOptions: _iosOptions,
-      );
-
-      if (refreshToken != null) {
-        await _secureStorage.write(
-          key: _refreshTokenKey,
-          value: refreshToken,
-          aOptions: _androidOptions,
-          iOptions: _iosOptions,
-        );
-      }
-
-      if (csrfToken != null) {
-        await _secureStorage.write(
-          key: _csrfTokenKey,
-          value: csrfToken,
-          aOptions: _androidOptions,
-          iOptions: _iosOptions,
-        );
-      }
-    } catch (e) {
-      throw CacheException(
-        message: AppStrings.format(
-          AppStrings.errorCacheFailed,
-          {'operation': 'save tokens', 'error': e.toString()},
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<String?> getAccessToken() async {
-    try {
-      return await _secureStorage.read(
-        key: _accessTokenKey,
-        aOptions: _androidOptions,
-        iOptions: _iosOptions,
-      );
-    } catch (e) {
-      throw CacheException(
-        message: AppStrings.format(
-          AppStrings.errorCacheFailed,
-          {'operation': 'get access token', 'error': e.toString()},
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<String?> getRefreshToken() async {
-    try {
-      return await _secureStorage.read(
-        key: _refreshTokenKey,
-        aOptions: _androidOptions,
-        iOptions: _iosOptions,
-      );
-    } catch (e) {
-      throw CacheException(
-        message: AppStrings.format(
-          AppStrings.errorCacheFailed,
-          {'operation': 'get refresh token', 'error': e.toString()},
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<String?> getCsrfToken() async {
-    try {
-      return await _secureStorage.read(
-        key: _csrfTokenKey,
-        aOptions: _androidOptions,
-        iOptions: _iosOptions,
-      );
-    } catch (e) {
-      throw CacheException(
-        message: AppStrings.format(
-          AppStrings.errorCacheFailed,
-          {'operation': 'get CSRF token', 'error': e.toString()},
-        ),
-      );
-    }
-  }
-
-  @override
-  Future<void> clearTokens() async {
-    try {
-      await Future.wait([
-        _secureStorage.delete(
-          key: _accessTokenKey,
-          aOptions: _androidOptions,
-          iOptions: _iosOptions,
-        ),
-        _secureStorage.delete(
-          key: _refreshTokenKey,
-          aOptions: _androidOptions,
-          iOptions: _iosOptions,
-        ),
-        _secureStorage.delete(
-          key: _csrfTokenKey,
-          aOptions: _androidOptions,
-          iOptions: _iosOptions,
-        ),
-      ]);
-    } catch (e) {
-      throw CacheException(
-        message: AppStrings.format(
-          AppStrings.errorCacheFailed,
-          {'operation': 'clear tokens', 'error': e.toString()},
-        ),
-      );
-    }
-  }
 
   @override
   Future<void> cacheUser(UserModel user) async {

@@ -5,7 +5,9 @@ import 'package:delivery_app/core/error/failures.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_local_data_source.dart';
 import 'package:delivery_app/features/auth/data/datasources/auth_remote_data_source.dart';
 import 'package:delivery_app/features/auth/domain/services/biometric_service.dart';
+import 'package:delivery_app/features/auth/domain/services/token_manager.dart';
 import 'package:delivery_app/features/auth/data/services/user_storage_service.dart';
+import 'package:delivery_app/features/auth/domain/entities/jwt_token.dart';
 import 'package:delivery_app/features/auth/domain/entities/user.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -17,12 +19,14 @@ class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
   final AuthLocalDataSource localDataSource;
   final BiometricService biometricService;
+  final TokenManager tokenManager;
   late final UserStorageService _userStorageService;
 
   AuthRepositoryImpl({
     required this.remoteDataSource,
     required this.localDataSource,
     required this.biometricService,
+    required this.tokenManager,
     FlutterSecureStorage? secureStorage,
   }) {
     _userStorageService = UserStorageService(
@@ -43,18 +47,26 @@ class AuthRepositoryImpl implements AuthRepository {
         password: password,
       );
 
-      // Extract tokens from userModel and save them
+      // Extract tokens from userModel
       final accessToken = userModel.accessToken;
       final refreshToken = userModel.refreshToken;
-      final csrfToken = userModel.csrfToken;
 
-      // Save tokens to local storage
+      // Create JwtToken and store via TokenManager
+      // This will set the token on ApiClient automatically
       if (accessToken != null && accessToken.isNotEmpty) {
-        await localDataSource.saveTokens(
-          accessToken: accessToken,
+        final jwtToken = JwtToken(
+          token: accessToken,
+          type: 'Bearer',
+          issuedAt: DateTime.now(),
+          expiresAt: DateTime.now().add(const Duration(minutes: 15)), // Default 15 mins
           refreshToken: refreshToken,
-          csrfToken: csrfToken,
         );
+
+        // Store token via TokenManager - this sets it on ApiClient
+        final storeResult = await tokenManager.storeToken(jwtToken);
+        if (storeResult.isLeft()) {
+          return Left(storeResult.fold((f) => f, (_) => const UnexpectedFailure(message: 'Failed to store token')));
+        }
       }
 
       // Cache the user locally
@@ -98,15 +110,8 @@ class AuthRepositoryImpl implements AuthRepository {
       // Persist user data with role to secure storage
       await _userStorageService.saveUser(userModel);
 
-      // Save tokens separately for authentication checks
-      // TODO: Update when backend provides tokens in a standardized way
-      // For now, using placeholder token to enable authentication check
-      await localDataSource.saveTokens(
-        accessToken:
-            'placeholder_token_${DateTime.now().millisecondsSinceEpoch}',
-        refreshToken: null,
-        csrfToken: null,
-      );
+      // Note: Registration doesn't automatically authenticate the user
+      // User must login after registration to get tokens
 
       return Right(userModel);
     } on ServerException catch (e) {
@@ -172,8 +177,10 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, bool>> logout() async {
     try {
-      // Clear local tokens and cached user
-      await localDataSource.clearTokens();
+      // Clear tokens via TokenManager - this clears from ApiClient too
+      await tokenManager.clearTokens();
+
+      // Clear cached user
       await localDataSource.clearCachedUser();
 
       // Clear persisted user data
@@ -189,41 +196,13 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  @override
-  Future<Either<Failure, bool>> refreshToken() async {
-    try {
-      final refreshToken = await localDataSource.getRefreshToken();
-      if (refreshToken == null) {
-        return const Left(
-            AuthenticationFailure(message: AppStrings.errorNoRefreshToken));
-      }
-
-      final tokenData = await remoteDataSource.refreshToken(refreshToken);
-
-      // Save new tokens
-      await localDataSource.saveTokens(
-        accessToken: tokenData['access_token'] as String,
-        refreshToken: tokenData['refresh_token'] as String?,
-        csrfToken: tokenData['csrf_token'] as String?,
-      );
-
-      return const Right(true);
-    } on AuthenticationException {
-      return const Left(
-          AuthenticationFailure(message: AppStrings.errorInvalidRefreshToken));
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorRefreshTokenFailed));
-    }
-  }
 
   @override
   Future<bool> isAuthenticated() async {
     try {
-      final token = await localDataSource.getAccessToken();
-      return token != null;
+      // Use TokenManager to check authentication status
+      // This ensures consistency with the login flow
+      return await tokenManager.isAuthenticated();
     } catch (e) {
       return false;
     }
@@ -232,56 +211,18 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<String?> getAccessToken() async {
     try {
-      return await localDataSource.getAccessToken();
+      // Use TokenManager to get access token
+      // This ensures consistency with the login flow
+      final result = await tokenManager.getAccessToken();
+      return result.fold(
+        (failure) => null,
+        (token) => token,
+      );
     } catch (e) {
       return null;
     }
   }
 
-  @override
-  Future<Either<Failure, String>> getCsrfToken() async {
-    try {
-      final token = await localDataSource.getCsrfToken();
-      if (token == null) {
-        return const Left(
-            AuthenticationFailure(message: AppStrings.errorNoCsrfToken));
-      }
-      return Right(token);
-    } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorGetCsrfTokenFailed));
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> saveTokens({
-    required String accessToken,
-    String? refreshToken,
-    String? csrfToken,
-  }) async {
-    try {
-      await localDataSource.saveTokens(
-        accessToken: accessToken,
-        refreshToken: refreshToken,
-        csrfToken: csrfToken,
-      );
-      return const Right(true);
-    } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorSaveTokensFailed));
-    }
-  }
-
-  @override
-  Future<Either<Failure, bool>> clearTokens() async {
-    try {
-      await localDataSource.clearTokens();
-      return const Right(true);
-    } catch (e) {
-      return const Left(
-          UnexpectedFailure(message: AppStrings.errorClearTokensFailed));
-    }
-  }
 
   @override
   Future<Either<Failure, User>> updateProfile({

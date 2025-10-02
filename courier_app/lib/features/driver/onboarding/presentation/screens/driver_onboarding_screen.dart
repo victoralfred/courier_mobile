@@ -32,6 +32,57 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
   final _vehicleColorController = TextEditingController();
 
   bool _isSubmitting = false;
+  bool _isCheckingAuth = true;
+  bool _isAuthenticated = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkAuthentication();
+  }
+
+  Future<void> _checkAuthentication() async {
+    try {
+      final authRepository = GetIt.instance<AuthRepository>();
+      final userResult = await authRepository.getCurrentUser();
+
+      setState(() {
+        _isAuthenticated = userResult.isRight();
+        _isCheckingAuth = false;
+      });
+
+      if (!_isAuthenticated) {
+        // Show dialog and redirect to login
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Authentication Required'),
+              content: const Text(
+                'You need to be logged in to register as a driver. Please log in first.',
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    // Navigate to login with redirect back to driver onboarding
+                    context.go('${RoutePaths.login}?redirect=${RoutePaths.driverOnboarding}');
+                  },
+                  child: const Text('Go to Login'),
+                ),
+              ],
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() {
+        _isCheckingAuth = false;
+        _isAuthenticated = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -56,7 +107,32 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
             },
           ),
         ),
-        body: Theme(
+        body: _isCheckingAuth
+            ? const Center(child: CircularProgressIndicator())
+            : !_isAuthenticated
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Icons.lock, size: 64, color: Colors.grey),
+                        const SizedBox(height: 16),
+                        const Text(
+                          'Authentication Required',
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text('Please log in to continue'),
+                        const SizedBox(height: 24),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.go('${RoutePaths.login}?redirect=${RoutePaths.driverOnboarding}');
+                          },
+                          child: const Text('Go to Login'),
+                        ),
+                      ],
+                    ),
+                  )
+                : Theme(
           data: Theme.of(context).copyWith(
             colorScheme: Theme.of(context).colorScheme.copyWith(
                   primary: Theme.of(context).primaryColor,
