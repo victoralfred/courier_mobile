@@ -433,15 +433,6 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
   Future<void> _submitOnboarding() async {
     if (_isSubmitting) return;
 
-    // Debug: Print field values
-    print('=== Driver Onboarding Submission ===');
-    print('License: ${_licenseController.text.trim()}');
-    print('Make: ${_vehicleMakeController.text.trim()}');
-    print('Model: ${_vehicleModelController.text.trim()}');
-    print('Plate: ${_vehiclePlateController.text.trim()}');
-    print('Year: ${_vehicleYearController.text.trim()}');
-    print('Color: ${_vehicleColorController.text.trim()}');
-
     // Validate all required fields
     if (_licenseController.text.trim().isEmpty ||
         _vehicleMakeController.text.trim().isEmpty ||
@@ -450,7 +441,6 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
         _vehicleYearController.text.trim().isEmpty ||
         _vehicleColorController.text.trim().isEmpty) {
       if (!mounted) return;
-      print('Validation failed - missing fields');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please fill in all required fields'),
@@ -460,38 +450,27 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       return;
     }
 
-    print('Validation passed, proceeding with submission');
-
     setState(() {
       _isSubmitting = true;
     });
 
     try {
       // Get current user
-      print('Getting current user...');
       final authRepository = GetIt.instance<AuthRepository>();
       final userResult = await authRepository.getCurrentUser();
 
       final user = userResult.fold(
-        (failure) {
-          print('Failed to get user: ${failure.message}');
-          throw Exception('User not found: ${failure.message}');
-        },
-        (user) {
-          print('Got user: ${user.id.value}');
-          return user;
-        },
+        (failure) => throw Exception('User not found: ${failure.message}'),
+        (user) => user,
       );
 
       // Parse vehicle year
       final year = int.tryParse(_vehicleYearController.text.trim());
       if (year == null) {
-        print('Invalid year: ${_vehicleYearController.text.trim()}');
         throw Exception('Invalid vehicle year');
       }
 
       // Create vehicle info
-      print('Creating vehicle info...');
       final vehicleInfo = VehicleInfo(
         plate: _vehiclePlateController.text.trim(),
         type: VehicleType.car, // Default to car for now
@@ -502,7 +481,6 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       );
 
       // Create driver entity
-      print('Creating driver entity...');
       final driver = Driver(
         id: const Uuid().v4(),
         userId: user.id.value,
@@ -519,17 +497,14 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       );
 
       // Save to database via repository
-      print('Saving driver to database...');
       final driverRepository = GetIt.instance<DriverRepository>();
       final result = await driverRepository.upsertDriver(driver);
 
       result.fold(
         (failure) {
-          print('Failed to save driver: ${failure.message}');
           throw Exception('Failed to save driver: ${failure.message}');
         },
         (savedDriver) {
-          print('Driver saved successfully!');
           if (!mounted) return;
 
           ScaffoldMessenger.of(context).showSnackBar(
@@ -539,19 +514,15 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
             ),
           );
 
-          print('Navigating to driver home...');
           // Navigate to driver home after short delay
           Future.delayed(const Duration(seconds: 2), () {
             if (mounted) {
-              print('Actually navigating now...');
               context.go(RoutePaths.driverHome);
             }
           });
         },
       );
-    } catch (e, stackTrace) {
-      print('Error during submission: $e');
-      print('Stack trace: $stackTrace');
+    } catch (e) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
