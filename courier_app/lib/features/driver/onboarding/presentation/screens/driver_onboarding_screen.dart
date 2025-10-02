@@ -507,19 +507,35 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
         (savedDriver) {
           if (!mounted) return;
 
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Application submitted successfully!'),
-              backgroundColor: Colors.green,
+          // Show success dialog with instructions
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Row(
+                children: [
+                  Icon(Icons.check_circle, color: Colors.green, size: 32),
+                  SizedBox(width: 12),
+                  Text('Application Submitted!'),
+                ],
+              ),
+              content: const Text(
+                'Your driver application has been submitted successfully.\n\n'
+                'Our team will review your application within 24-48 hours. '
+                'You will receive a notification once your application is approved.\n\n'
+                'Please log out and log back in after approval to access driver features.',
+              ),
+              actions: [
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    context.go(RoutePaths.login);
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
             ),
           );
-
-          // Navigate to driver home after short delay
-          Future.delayed(const Duration(seconds: 2), () {
-            if (mounted) {
-              context.go(RoutePaths.driverHome);
-            }
-          });
         },
       );
     } catch (e) {
