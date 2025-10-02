@@ -8,6 +8,7 @@ import 'package:delivery_app/core/error/exceptions.dart';
 /// unnecessary API calls. Tokens are automatically refreshed when expired.
 class CsrfTokenManager {
   final Dio dio;
+  final String? Function()? getAuthToken;
   static const String _csrfEndpoint = '/api/v1/auth/csrf';
   static const Duration _defaultCacheDuration = Duration(minutes: 10);
 
@@ -17,6 +18,7 @@ class CsrfTokenManager {
 
   CsrfTokenManager({
     required this.dio,
+    this.getAuthToken,
     Duration? cacheDuration,
   }) : _cacheDuration = cacheDuration ?? _defaultCacheDuration;
 
@@ -32,7 +34,14 @@ class CsrfTokenManager {
 
     // Fetch new token from API
     try {
-      final response = await dio.get(_csrfEndpoint);
+      // Add auth token if available
+      final authToken = getAuthToken?.call();
+      final options = Options();
+      if (authToken != null && authToken.isNotEmpty) {
+        options.headers = {'Authorization': 'Bearer $authToken'};
+      }
+
+      final response = await dio.get(_csrfEndpoint, options: options);
 
       // Validate response structure
       final data = response.data;

@@ -95,6 +95,27 @@ class ApiClient {
   @visibleForTesting
   Dio get dio => _dio;
 
+  /// Get the current auth token
+  String? getAuthToken() => _authToken;
+
+  /// Set the CSRF token manager (used for circular dependency resolution)
+  void setCsrfTokenManager(CsrfTokenManager manager) {
+    // Remove existing CSRF interceptor if any
+    _dio.interceptors.removeWhere((i) => i is CsrfInterceptor);
+
+    // Add new CSRF interceptor
+    _dio.interceptors.add(
+      CsrfInterceptor(
+        csrfTokenManager: manager,
+        excludedPaths: [
+          '/api/v1/users/auth',
+          '/api/v1/users/refresh',
+          '/api/v1/auth/csrf',
+        ],
+      ),
+    );
+  }
+
   /// Configure Dio with base options and interceptors
   void _configureDio() {
     // Configure certificate pinning if provided

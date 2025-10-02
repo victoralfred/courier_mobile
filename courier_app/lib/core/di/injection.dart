@@ -4,6 +4,8 @@ import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:local_auth/local_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:delivery_app/core/config/app_config.dart';
+import 'package:delivery_app/core/config/environment.dart';
 import 'package:delivery_app/core/database/app_database.dart';
 import 'package:delivery_app/core/network/api_client.dart';
 import 'package:delivery_app/core/network/connectivity_service.dart';
@@ -75,19 +77,33 @@ Future<void> init() async {
   );
 
   // Core - Network
-  // Create a separate Dio instance for CSRF token manager
-  final csrfDio = Dio();
-  getIt.registerLazySingleton<CsrfTokenManager>(
-    () => CsrfTokenManager(dio: csrfDio),
-  );
-
-  // API Client with CSRF support
+  // API Client first (without CSRF initially)
   getIt.registerLazySingleton(
     () => ApiClient.development(
       certificatePinner: getIt<CertificatePinner>(),
-      csrfTokenManager: getIt<CsrfTokenManager>(),
+      csrfTokenManager: null, // Will be set later
     ),
   );
+
+  // Create a separate Dio instance for CSRF token manager with base URL configured
+  final csrfDio = Dio();
+  // Use the same development environment as ApiClient
+  AppConfig.setEnvironment(Environment.development);
+  csrfDio.options.baseUrl = AppConfig.config.apiBaseUrl;
+  csrfDio.options.headers = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  };
+
+  getIt.registerLazySingleton<CsrfTokenManager>(
+    () => CsrfTokenManager(
+      dio: csrfDio,
+      getAuthToken: () => getIt<ApiClient>().getAuthToken(),
+    ),
+  );
+
+  // Set CSRF token manager on ApiClient to resolve circular dependency
+  getIt<ApiClient>().setCsrfTokenManager(getIt<CsrfTokenManager>());
 
   // Core - Sync Services
   getIt.registerLazySingleton<SyncService>(
