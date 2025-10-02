@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
+import 'package:delivery_app/core/network/connectivity_service.dart';
 import 'package:delivery_app/core/routing/route_names.dart';
 import 'package:delivery_app/features/auth/domain/repositories/auth_repository.dart';
 import 'package:delivery_app/features/drivers/domain/repositories/driver_repository.dart';
@@ -500,14 +501,20 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       final driverRepository = GetIt.instance<DriverRepository>();
       final result = await driverRepository.upsertDriver(driver);
 
-      result.fold(
+      await result.fold(
         (failure) {
           throw Exception('Failed to save driver: ${failure.message}');
         },
-        (savedDriver) {
+        (savedDriver) async {
           if (!mounted) return;
 
-          // Show success dialog with instructions
+          // Trigger immediate sync if online
+          final connectivityService = GetIt.instance<ConnectivityService>();
+          final syncedSuccessfully = await connectivityService.checkAndSync();
+
+          if (!mounted) return;
+
+          // Show success dialog with appropriate message
           showDialog(
             context: context,
             barrierDismissible: false,
@@ -519,19 +526,24 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                   Text('Application Submitted!'),
                 ],
               ),
-              content: const Text(
-                'Your driver application has been submitted successfully.\n\n'
-                'Our team will review your application within 24-48 hours. '
-                'You will receive a notification once your application is approved.\n\n'
-                'Please log out and log back in after approval to access driver features.',
+              content: Text(
+                syncedSuccessfully
+                    ? 'Your driver application has been submitted to our servers successfully.\n\n'
+                      'Our team will review your application within 24-48 hours. '
+                      'You will receive a notification once your application is approved.\n\n'
+                      'You can view your application status in the driver section.'
+                    : 'Your driver application has been saved locally.\n\n'
+                      'It will be submitted automatically when you have an internet connection.\n\n'
+                      'You can view your application status in the driver section.',
               ),
               actions: [
                 ElevatedButton(
                   onPressed: () {
                     Navigator.of(context).pop();
-                    context.go(RoutePaths.login);
+                    // Navigate to driver status page instead of login
+                    context.go(RoutePaths.driverStatus);
                   },
-                  child: const Text('OK'),
+                  child: const Text('View Status'),
                 ),
               ],
             ),

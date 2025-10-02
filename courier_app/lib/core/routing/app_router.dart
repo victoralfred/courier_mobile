@@ -14,6 +14,7 @@ import '../../features/auth/presentation/screens/forgot_password_screen.dart';
 import '../../features/customer/presentation/screens/customer_home_screen.dart';
 import '../../features/driver/presentation/screens/driver_home_screen.dart';
 import '../../features/driver/onboarding/presentation/screens/driver_onboarding_screen.dart';
+import '../../features/driver/status/presentation/screens/driver_status_screen.dart';
 import '../../features/orders/presentation/blocs/order/order_bloc.dart';
 import '../../features/orders/presentation/screens/create_order_screen.dart';
 import '../../features/orders/presentation/screens/order_tracking_screen.dart';
@@ -274,6 +275,13 @@ class AppRouter {
           name: RouteNames.driverOnboarding,
           builder: (context, state) => const DriverOnboardingScreen(),
           redirect: roleGuard.requireDriverRole,
+        ),
+        GoRoute(
+          path: RoutePaths.driverStatus,
+          name: RouteNames.driverStatus,
+          builder: (context, state) => const DriverStatusScreen(),
+          // No role guard - any authenticated user can view their driver status
+          redirect: authGuard.redirectIfNotAuthenticated,
         ),
         GoRoute(
           path: '/driver/navigation/:deliveryId',

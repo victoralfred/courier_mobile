@@ -22,6 +22,7 @@ class RouteNames {
   // Driver Routes
   static const String driverHome = 'driver-home';
   static const String driverOnboarding = 'driver-onboarding';
+  static const String driverStatus = 'driver-status';
   static const String driverProfile = 'driver-profile';
   static const String driverDeliveries = 'driver-deliveries';
   static const String driverDeliveryDetails = 'driver-delivery-details';
@@ -63,6 +64,7 @@ class RoutePaths {
   // Driver Paths
   static const String driverHome = '/driver/home';
   static const String driverOnboarding = '/driver/onboarding';
+  static const String driverStatus = '/driver/status';
   static const String driverProfile = '/driver/profile';
   static const String driverDeliveries = '/driver/deliveries';
   static const String driverDeliveryDetails = '/driver/deliveries/:deliveryId';
