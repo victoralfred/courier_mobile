@@ -20,8 +20,12 @@ void main() async {
   final tokenDataSource = di.getIt<TokenLocalDataSource>();
   final storedToken = await tokenDataSource.getToken();
   if (storedToken != null) {
+    print('🔑 Token loaded: ${storedToken.token.substring(0, 20)}...');
     final apiClient = di.getIt<ApiClient>();
     apiClient.setAuthToken(storedToken.token, refreshToken: storedToken.refreshToken);
+    print('✅ Token set on ApiClient');
+  } else {
+    print('❌ No token found in storage');
   }
 
   // Start connectivity monitoring and sync service
