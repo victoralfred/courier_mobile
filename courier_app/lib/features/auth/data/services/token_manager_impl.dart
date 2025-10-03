@@ -134,7 +134,7 @@ class TokenManagerImpl implements TokenManager {
 
       // Call refresh endpoint
       final response = await apiClient.post(
-        '/api/v1/auth/refresh',
+        '/users/refresh',
         data: {
           'refresh_token': currentToken.refreshToken,
         },

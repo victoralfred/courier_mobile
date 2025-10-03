@@ -2,13 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/auth/domain/entities/user_role.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/drivers/domain/repositories/driver_repository.dart';
 import 'route_names.dart';
 
 /// Guard to check if user is authenticated
 class AuthGuard {
   final AuthRepository authRepository;
+  final DriverRepository driverRepository;
 
-  AuthGuard({required this.authRepository});
+  AuthGuard({
+    required this.authRepository,
+    required this.driverRepository,
+  });
 
   /// Redirect logic for authenticated routes
   Future<String?> redirectIfNotAuthenticated(
@@ -69,8 +74,12 @@ class AuthGuard {
 /// Guard to check role-based access
 class RoleGuard {
   final AuthRepository authRepository;
+  final DriverRepository driverRepository;
 
-  RoleGuard({required this.authRepository});
+  RoleGuard({
+    required this.authRepository,
+    required this.driverRepository,
+  });
 
   /// Check if user has customer role
   Future<String?> requireCustomerRole(
@@ -88,20 +97,25 @@ class RoleGuard {
 
     final userResult = await authRepository.getCurrentUser();
 
-    return userResult.fold(
-      (failure) {
+    return await userResult.fold(
+      (failure) async {
         print('RoleGuard: Failed to get current user: ${failure.message}');
         return RoutePaths.login;
       },
-      (user) {
+      (user) async {
         print('RoleGuard: Current user role: ${user.role.type}');
         // Allow both customer and admin roles
-        if (user.role.type != UserRoleType.customer && user.role.type != UserRoleType.admin) {
+        if (user.role.type != UserRoleType.customer &&
+            user.role.type != UserRoleType.admin) {
           // Redirect to appropriate home based on actual role
           switch (user.role.type) {
             case UserRoleType.driver:
-              return user.role.permissions.contains('driver.verified')
-                  ? RoutePaths.driverHome
+              // Check if driver has completed onboarding
+              final driverResult =
+                  await driverRepository.getDriverByUserId(user.id.value);
+              final hasDriverRecord = driverResult.isRight();
+              return hasDriverRecord
+                  ? RoutePaths.driverStatus
                   : RoutePaths.driverOnboarding;
             default:
               return RoutePaths.login;
@@ -128,7 +142,7 @@ class RoleGuard {
 
     return userResult.fold(
       (failure) => RoutePaths.login,
-      (user) {
+      (user) async {
         if (user.role.type != UserRoleType.driver) {
           // Redirect to appropriate home based on actual role
           switch (user.role.type) {
@@ -139,13 +153,23 @@ class RoleGuard {
           }
         }
 
-        // Check if driver needs onboarding
-        if (state.uri.path != RoutePaths.driverOnboarding &&
-            !user.role.permissions.contains('driver.verified')) {
-          return RoutePaths.driverOnboarding;
+        // Check if driver has completed onboarding by checking for driver record
+        if (state.uri.path != RoutePaths.driverOnboarding) {
+          print('RouteGuard: Checking for driver record (path: ${state.uri.path})...');
+          final driverResult =
+              await driverRepository.getDriverByUserId(user.id.value);
+
+          // If no driver record exists, redirect to onboarding
+          final hasDriverRecord = driverResult.isRight();
+          print('RouteGuard: Has driver record: $hasDriverRecord');
+          if (!hasDriverRecord) {
+            print('RouteGuard: Redirecting to onboarding (no driver record)');
+            return RoutePaths.driverOnboarding;
+          }
+          print('RouteGuard: Driver record exists, allowing navigation');
         }
 
-        return null; // User has driver role
+        return null; // User has driver role and driver record
       },
     );
   }

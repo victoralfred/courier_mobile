@@ -44,6 +44,19 @@ class Driver extends Equatable {
   final double rating;
   final int totalRatings;
 
+  // NEW FIELDS for enhanced status tracking
+  /// Reason why driver application was rejected (null if not rejected)
+  final String? rejectionReason;
+
+  /// Reason why driver account was suspended (null if not suspended)
+  final String? suspensionReason;
+
+  /// Date when suspension expires (null if not suspended or permanent)
+  final DateTime? suspensionExpiresAt;
+
+  /// Timestamp when driver status was last updated
+  final DateTime? statusUpdatedAt;
+
   const Driver._({
     required this.id,
     required this.userId,
@@ -59,6 +72,10 @@ class Driver extends Equatable {
     this.lastLocationUpdate,
     required this.rating,
     required this.totalRatings,
+    this.rejectionReason,
+    this.suspensionReason,
+    this.suspensionExpiresAt,
+    this.statusUpdatedAt,
   });
 
   /// Creates a Driver with validation
@@ -79,6 +96,10 @@ class Driver extends Equatable {
     DateTime? lastLocationUpdate,
     required double rating,
     required int totalRatings,
+    String? rejectionReason,
+    String? suspensionReason,
+    DateTime? suspensionExpiresAt,
+    DateTime? statusUpdatedAt,
   }) {
     // Trim whitespace
     final trimmedFirstName = firstName.trim();
@@ -159,6 +180,10 @@ class Driver extends Equatable {
       lastLocationUpdate: lastLocationUpdate,
       rating: rating,
       totalRatings: totalRatings,
+      rejectionReason: rejectionReason?.trim(),
+      suspensionReason: suspensionReason?.trim(),
+      suspensionExpiresAt: suspensionExpiresAt,
+      statusUpdatedAt: statusUpdatedAt,
     );
   }
 
@@ -203,6 +228,10 @@ class Driver extends Equatable {
     DateTime? lastLocationUpdate,
     double? rating,
     int? totalRatings,
+    String? rejectionReason,
+    String? suspensionReason,
+    DateTime? suspensionExpiresAt,
+    DateTime? statusUpdatedAt,
   }) =>
       Driver(
         id: id ?? this.id,
@@ -219,6 +248,10 @@ class Driver extends Equatable {
         lastLocationUpdate: lastLocationUpdate ?? this.lastLocationUpdate,
         rating: rating ?? this.rating,
         totalRatings: totalRatings ?? this.totalRatings,
+        rejectionReason: rejectionReason ?? this.rejectionReason,
+        suspensionReason: suspensionReason ?? this.suspensionReason,
+        suspensionExpiresAt: suspensionExpiresAt ?? this.suspensionExpiresAt,
+        statusUpdatedAt: statusUpdatedAt ?? this.statusUpdatedAt,
       );
 
   @override
@@ -237,6 +270,10 @@ class Driver extends Equatable {
         lastLocationUpdate,
         rating,
         totalRatings,
+        rejectionReason,
+        suspensionReason,
+        suspensionExpiresAt,
+        statusUpdatedAt,
       ];
 
   @override

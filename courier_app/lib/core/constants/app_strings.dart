@@ -448,7 +448,7 @@ class AppStrings {
 
   // OAuth2 API Endpoints
   static const String oauthApiCallback = '/auth/oauth/callback';
-  static const String oauthApiRefresh = '/auth/refresh';
+  static const String oauthApiRefresh = '/users/refresh';
   static const String oauthApiRevoke = '/auth/revoke';
   static const String oauthApiUsersMe = '/users/me';
 

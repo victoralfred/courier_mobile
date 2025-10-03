@@ -19,7 +19,8 @@ import 'package:delivery_app/features/drivers/domain/value_objects/driver_status
 /// 4. Sync with backend when online
 class DriverRepositoryImpl implements DriverRepository {
   final AppDatabase _database;
-  final dynamic _apiClient; // ApiClient - using dynamic to avoid circular dependency
+  final dynamic
+      _apiClient; // ApiClient - using dynamic to avoid circular dependency
 
   DriverRepositoryImpl({
     required AppDatabase database,
@@ -75,15 +76,21 @@ class DriverRepositoryImpl implements DriverRepository {
       }
 
       // Fetch driver from backend
-      final response = await _apiClient.get('/drivers/user/$userId');
+      final response = await _apiClient.get('/drivers/$userId');
 
       if (response.statusCode == 200 && response.data != null) {
-        final data = response.data as Map<String, dynamic>;
+        final responseData = response.data as Map<String, dynamic>;
+
+        // Extract the actual driver data from the wrapper
+        final data = responseData['data'] as Map<String, dynamic>;
 
         // Map backend response to Driver entity
         final driver = DriverMapper.fromBackendJson(data);
 
-        // Save to local database (overwrites existing record)
+        // Delete any existing driver records for this user to prevent duplicates
+        await _database.driverDao.deleteDriverByUserId(userId);
+
+        // Save fresh record to local database
         final driverData = DriverMapper.toDatabase(driver);
         await _database.driverDao.upsertDriver(driverData);
 
@@ -101,7 +108,8 @@ class DriverRepositoryImpl implements DriverRepository {
       }
     } catch (e) {
       return Left(
-        NetworkFailure(message: 'Failed to fetch driver from backend: ${e.toString()}'),
+        NetworkFailure(
+            message: 'Failed to fetch driver from backend: ${e.toString()}'),
       );
     }
   }
@@ -364,8 +372,8 @@ class DriverRepositoryImpl implements DriverRepository {
 
       return const Right(true);
     } catch (e) {
-      return Left(
-          CacheFailure(message: 'Failed to delete driver by user ID: ${e.toString()}'));
+      return Left(CacheFailure(
+          message: 'Failed to delete driver by user ID: ${e.toString()}'));
     }
   }
 

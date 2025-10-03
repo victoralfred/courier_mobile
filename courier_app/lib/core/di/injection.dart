@@ -34,6 +34,9 @@ import 'package:delivery_app/features/auth/presentation/blocs/login/login_bloc.d
 import 'package:delivery_app/features/auth/presentation/blocs/registration/registration_bloc.dart';
 import 'package:delivery_app/features/drivers/data/repositories/driver_repository_impl.dart';
 import 'package:delivery_app/features/drivers/domain/repositories/driver_repository.dart';
+import 'package:delivery_app/features/driver/status/domain/usecases/sync_driver_status.dart';
+import 'package:delivery_app/features/driver/status/domain/usecases/delete_driver_application.dart';
+import 'package:delivery_app/features/driver/status/presentation/blocs/driver_status_bloc.dart';
 import 'package:delivery_app/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:delivery_app/features/orders/domain/repositories/order_repository.dart';
 import 'package:delivery_app/features/orders/presentation/blocs/order/order_bloc.dart';
@@ -180,7 +183,10 @@ Future<void> init() async {
 
   // Driver - Repositories
   getIt.registerLazySingleton<DriverRepository>(
-    () => DriverRepositoryImpl(database: getIt<AppDatabase>()),
+    () => DriverRepositoryImpl(
+      database: getIt<AppDatabase>(),
+      apiClient: getIt<ApiClient>(),
+    ),
   );
 
   // Order - Repositories
@@ -191,6 +197,20 @@ Future<void> init() async {
   // Auth - Use Cases
   getIt.registerLazySingleton(() => Login(getIt()));
   getIt.registerLazySingleton(() => Register(getIt()));
+
+  // Driver - Use Cases
+  getIt.registerLazySingleton(
+    () => SyncDriverStatus(
+      repository: getIt<DriverRepository>(),
+      connectivity: getIt<ConnectivityService>(),
+    ),
+  );
+
+  getIt.registerLazySingleton(
+    () => DeleteDriverApplication(
+      repository: getIt<DriverRepository>(),
+    ),
+  );
 
   // Auth - BLoCs
   getIt.registerFactory(
@@ -206,6 +226,15 @@ Future<void> init() async {
     () => RegistrationBloc(
       authRepository: getIt<AuthRepository>(),
       registerUseCase: getIt<Register>(),
+    ),
+  );
+
+  // Driver - BLoCs
+  getIt.registerFactory(
+    () => DriverStatusBloc(
+      syncDriverStatus: getIt<SyncDriverStatus>(),
+      deleteDriverApplication: getIt<DeleteDriverApplication>(),
+      authRepository: getIt<AuthRepository>(),
     ),
   );
 

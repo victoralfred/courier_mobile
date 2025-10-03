@@ -16,9 +16,7 @@ void main() {
   setUp(() {
     mockCsrfTokenManager = MockCsrfTokenManager();
     mockHandler = MockRequestInterceptorHandler();
-    csrfInterceptor = CsrfInterceptor(
-      csrfTokenManager: mockCsrfTokenManager,
-    );
+    csrfInterceptor = CsrfInterceptor(csrfTokenManager: mockCsrfTokenManager);
   });
 
   group('CsrfInterceptor', () {
@@ -26,12 +24,10 @@ void main() {
       test('should add CSRF token header for POST requests', () async {
         // Arrange
         const testToken = 'csrf-token-123';
-        final options = RequestOptions(
-          path: '/api/v1/orders',
-          method: 'POST',
-        );
-        when(mockCsrfTokenManager.getToken())
-            .thenAnswer((_) async => testToken);
+        final options = RequestOptions(path: '/api/v1/orders', method: 'POST');
+        when(
+          mockCsrfTokenManager.getToken(),
+        ).thenAnswer((_) async => testToken);
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -45,12 +41,10 @@ void main() {
       test('should add CSRF token header for PUT requests', () async {
         // Arrange
         const testToken = 'csrf-token-456';
-        final options = RequestOptions(
-          path: '/api/v1/users/me',
-          method: 'PUT',
-        );
-        when(mockCsrfTokenManager.getToken())
-            .thenAnswer((_) async => testToken);
+        final options = RequestOptions(path: '/api/v1/users/me', method: 'PUT');
+        when(
+          mockCsrfTokenManager.getToken(),
+        ).thenAnswer((_) async => testToken);
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -68,8 +62,9 @@ void main() {
           path: '/api/v1/orders/123',
           method: 'DELETE',
         );
-        when(mockCsrfTokenManager.getToken())
-            .thenAnswer((_) async => testToken);
+        when(
+          mockCsrfTokenManager.getToken(),
+        ).thenAnswer((_) async => testToken);
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -87,8 +82,9 @@ void main() {
           path: '/api/v1/users/me',
           method: 'PATCH',
         );
-        when(mockCsrfTokenManager.getToken())
-            .thenAnswer((_) async => testToken);
+        when(
+          mockCsrfTokenManager.getToken(),
+        ).thenAnswer((_) async => testToken);
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -101,10 +97,7 @@ void main() {
 
       test('should NOT add CSRF token for GET requests', () async {
         // Arrange
-        final options = RequestOptions(
-          path: '/api/v1/orders',
-          method: 'GET',
-        );
+        final options = RequestOptions(path: '/api/v1/orders', method: 'GET');
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -117,10 +110,7 @@ void main() {
 
       test('should NOT add CSRF token for HEAD requests', () async {
         // Arrange
-        final options = RequestOptions(
-          path: '/api/v1/health',
-          method: 'HEAD',
-        );
+        final options = RequestOptions(path: '/api/v1/health', method: 'HEAD');
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -149,12 +139,10 @@ void main() {
 
       test('should handle CSRF token fetch failure gracefully', () async {
         // Arrange
-        final options = RequestOptions(
-          path: '/api/v1/orders',
-          method: 'POST',
-        );
-        when(mockCsrfTokenManager.getToken())
-            .thenThrow(Exception('Failed to get token'));
+        final options = RequestOptions(path: '/api/v1/orders', method: 'POST');
+        when(
+          mockCsrfTokenManager.getToken(),
+        ).thenThrow(Exception('Failed to get token'));
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);
@@ -167,12 +155,10 @@ void main() {
 
       test('should handle null token from manager', () async {
         // Arrange
-        final options = RequestOptions(
-          path: '/api/v1/orders',
-          method: 'POST',
-        );
-        when(mockCsrfTokenManager.getTokenOrNull())
-            .thenAnswer((_) async => null);
+        final options = RequestOptions(path: '/api/v1/orders', method: 'POST');
+        when(
+          mockCsrfTokenManager.getTokenOrNull(),
+        ).thenAnswer((_) async => null);
 
         final interceptor = CsrfInterceptor(
           csrfTokenManager: mockCsrfTokenManager,
@@ -215,8 +201,9 @@ void main() {
           path: '/api/v1/orders',
           method: 'post', // lowercase
         );
-        when(mockCsrfTokenManager.getToken())
-            .thenAnswer((_) async => testToken);
+        when(
+          mockCsrfTokenManager.getToken(),
+        ).thenAnswer((_) async => testToken);
 
         // Act
         await csrfInterceptor.onRequest(options, mockHandler);

@@ -44,7 +44,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.test(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -52,7 +52,18 @@ class AppDatabase extends _$AppDatabase {
           await m.createAll();
         },
         onUpgrade: (Migrator m, int from, int to) async {
-          // Future migrations will be added here
+          if (from == 1 && to == 2) {
+            // Add new columns for driver status tracking
+            await m.addColumn(driverTable, driverTable.rejectionReason);
+            await m.addColumn(driverTable, driverTable.suspensionReason);
+            await m.addColumn(driverTable, driverTable.suspensionExpiresAt);
+            await m.addColumn(driverTable, driverTable.statusUpdatedAt);
+          }
+          if (from == 2 && to == 3) {
+            // Add unique constraint on userId - recreate table to add constraint
+            // Note: Drift will automatically handle this via schema change
+            await m.recreateAllViews();
+          }
         },
       );
 }

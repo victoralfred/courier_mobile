@@ -11,8 +11,8 @@ class DriverTable extends Table {
   /// Unique driver ID
   TextColumn get id => text()();
 
-  /// Associated user ID
-  TextColumn get userId => text()();
+  /// Associated user ID (unique - one driver per user)
+  TextColumn get userId => text().unique()();
 
   /// Driver's first name
   TextColumn get firstName => text()();
@@ -71,6 +71,19 @@ class DriverTable extends Table {
 
   /// Total number of ratings received
   IntColumn get totalRatings => integer()();
+
+  // Status tracking fields
+  /// Reason why driver application was rejected (null if not rejected)
+  TextColumn get rejectionReason => text().nullable()();
+
+  /// Reason why driver account was suspended (null if not suspended)
+  TextColumn get suspensionReason => text().nullable()();
+
+  /// Date when suspension expires (null if not suspended or permanent)
+  DateTimeColumn get suspensionExpiresAt => dateTime().nullable()();
+
+  /// Timestamp when driver status was last updated
+  DateTimeColumn get statusUpdatedAt => dateTime().nullable()();
 
   /// Last sync with backend
   DateTimeColumn get lastSyncedAt => dateTime().nullable()();

@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../core/error/failures.dart';
 import '../../features/auth/domain/entities/user.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
+import '../../features/drivers/domain/repositories/driver_repository.dart';
 import '../../features/auth/presentation/blocs/login/login_bloc.dart';
 import '../../features/auth/presentation/blocs/registration/registration_bloc.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
@@ -26,13 +27,23 @@ import 'splash_screen.dart';
 
 class AppRouter {
   final AuthRepository authRepository;
+  final DriverRepository driverRepository;
   late final AuthGuard authGuard;
   late final RoleGuard roleGuard;
   late final GoRouter router;
 
-  AppRouter({required this.authRepository}) {
-    authGuard = AuthGuard(authRepository: authRepository);
-    roleGuard = RoleGuard(authRepository: authRepository);
+  AppRouter({
+    required this.authRepository,
+    required this.driverRepository,
+  }) {
+    authGuard = AuthGuard(
+      authRepository: authRepository,
+      driverRepository: driverRepository,
+    );
+    roleGuard = RoleGuard(
+      authRepository: authRepository,
+      driverRepository: driverRepository,
+    );
 
     router = GoRouter(
       initialLocation: RoutePaths.splash,

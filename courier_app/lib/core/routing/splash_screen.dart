@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/auth/domain/entities/user_role.dart';
+import '../../features/drivers/domain/repositories/driver_repository.dart';
 import '../constants/app_strings.dart';
 import 'route_names.dart';
 
@@ -77,7 +79,7 @@ class _SplashScreenState extends State<SplashScreen>
           // If we can't get user, go to login
           context.go(RoutePaths.login);
         },
-        (user) {
+        (user) async {
           // Navigate based on user role
           switch (user.role.type) {
             case UserRoleType.customer:
@@ -85,12 +87,28 @@ class _SplashScreenState extends State<SplashScreen>
               context.go(RoutePaths.customerHome);
               break;
             case UserRoleType.driver:
-              // Check if driver has completed onboarding
-              if (user.role.permissions.contains('driver.verified')) {
-                context.go(RoutePaths.driverHome);
-              } else {
-                context.go(RoutePaths.driverOnboarding);
-              }
+              // Check if driver has completed onboarding by checking database
+              print('SplashScreen: User is a driver, checking for driver record...');
+              final driverRepository = GetIt.instance<DriverRepository>();
+              final driverResult =
+                  await driverRepository.getDriverByUserId(user.id.value);
+
+              if (!mounted) return;
+
+              driverResult.fold(
+                (failure) {
+                  // No driver record - navigate to onboarding
+                  print('SplashScreen: No driver record found - ${failure.message}');
+                  print('SplashScreen: Navigating to onboarding...');
+                  context.go(RoutePaths.driverOnboarding);
+                },
+                (driver) {
+                  // Driver record exists - navigate to status screen
+                  print('SplashScreen: Driver record found - Status: ${driver.status.name}');
+                  print('SplashScreen: Navigating to status screen...');
+                  context.go(RoutePaths.driverStatus);
+                },
+              );
               break;
           }
         },

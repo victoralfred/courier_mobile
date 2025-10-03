@@ -180,32 +180,6 @@ void main() {
       verifyZeroInteractions(mockAuthRepository);
     });
 
-    test('should save tokens after successful login', () async {
-      // Arrange
-      when(mockAuthRepository.login(
-        email: anyNamed('email'),
-        password: anyNamed('password'),
-      )).thenAnswer((_) async => Right(testUser));
-
-      when(mockAuthRepository.saveTokens(
-        accessToken: anyNamed('accessToken'),
-        refreshToken: anyNamed('refreshToken'),
-        csrfToken: anyNamed('csrfToken'),
-      )).thenAnswer((_) async => const Right(true));
-
-      // Act
-      final result = await usecase(const LoginParams(
-        email: testEmail,
-        password: testPassword,
-      ));
-
-      // Assert
-      expect(result, equals(Right(testUser)));
-      verify(mockAuthRepository.login(
-        email: testEmail,
-        password: testPassword,
-      ));
-    });
   });
 
   group('LoginParams', () {

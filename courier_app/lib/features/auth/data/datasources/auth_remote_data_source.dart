@@ -64,7 +64,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   static const String _loginEndpoint = '/users/auth';
   static const String _registerEndpoint = '/users';
   static const String _logoutEndpoint = '/auth/logout';
-  static const String _refreshTokenEndpoint = '/auth/refresh';
+  static const String _refreshTokenEndpoint = '/users/refresh';
   static const String _currentUserEndpoint = '/users/me';
   static const String _updateProfileEndpoint = '/users/me';
   static const String _passwordResetEndpoint = '/auth/password/reset';
@@ -97,7 +97,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         final fullName = responseData['name'] ?? '';
         final nameParts = fullName.split(' ');
         final firstName = nameParts.isNotEmpty ? nameParts.first : '';
-        final lastName = nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
+        final lastName =
+            nameParts.length > 1 ? nameParts.sublist(1).join(' ') : '';
 
         // Create user data structure expected by UserModel
         final userData = {
@@ -106,7 +107,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           'first_name': firstName,
           'last_name': lastName,
           // TODO: Backend should return phone number in login response
-          'phone': '+2340000000000', // Placeholder - backend doesn't provide phone in login response
+          'phone':
+              '+2340000000000', // Placeholder - backend doesn't provide phone in login response
           'role': responseData['role'],
           'status': 'active',
           'created_at': DateTime.now().toIso8601String(),
@@ -114,9 +116,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
           // Add token data
           'access_token': responseData['token'],
           // TODO: Backend should return refresh_token in login response
-          'refresh_token': '', // Placeholder - backend doesn't provide refresh token yet
+          'refresh_token':
+              '', // Placeholder - backend doesn't provide refresh token yet
           // TODO: Backend should return csrf_token in login response
-          'csrf_token': '', // Placeholder - backend doesn't provide CSRF token yet
+          'csrf_token':
+              '', // Placeholder - backend doesn't provide CSRF token yet
         };
 
         return UserModel.fromJson(userData);
@@ -197,13 +201,13 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         }
       } else if (e.response?.statusCode == 400) {
         throw ServerException(
-          message: e.response?.data['message'] ??
-              AppStrings.errorValidationFailed,
+          message:
+              e.response?.data['message'] ?? AppStrings.errorValidationFailed,
         );
       }
       throw ServerException(
-        message: e.response?.data['message'] ??
-            AppStrings.errorRegistrationFailed,
+        message:
+            e.response?.data['message'] ?? AppStrings.errorRegistrationFailed,
       );
     } catch (e) {
       throw ServerException(
@@ -474,8 +478,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         return response.data['csrf_token'];
       } else {
         throw ServerException(
-          message:
-              response.data['message'] ?? AppStrings.errorCsrfTokenFailed,
+          message: response.data['message'] ?? AppStrings.errorCsrfTokenFailed,
         );
       }
     } on DioException catch (e) {
@@ -485,8 +488,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         );
       }
       throw ServerException(
-        message:
-            e.response?.data['message'] ?? AppStrings.errorCsrfTokenFailed,
+        message: e.response?.data['message'] ?? AppStrings.errorCsrfTokenFailed,
       );
     } catch (e) {
       throw ServerException(
