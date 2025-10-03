@@ -31,6 +31,7 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
   final _vehicleMakeController = TextEditingController();
   final _vehicleColorController = TextEditingController();
 
+  VehicleType _selectedVehicleType = VehicleType.car;
   bool _isSubmitting = false;
   bool _isCheckingAuth = true;
   bool _isAuthenticated = false;
@@ -67,7 +68,8 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                   onPressed: () {
                     Navigator.of(context).pop();
                     // Navigate to login with redirect back to driver onboarding
-                    context.go('${RoutePaths.login}?redirect=${RoutePaths.driverOnboarding}');
+                    context.go(
+                        '${RoutePaths.login}?redirect=${RoutePaths.driverOnboarding}');
                   },
                   child: const Text('Go to Login'),
                 ),
@@ -118,14 +120,16 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                         const SizedBox(height: 16),
                         const Text(
                           'Authentication Required',
-                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.bold),
                         ),
                         const SizedBox(height: 8),
                         const Text('Please log in to continue'),
                         const SizedBox(height: 24),
                         ElevatedButton(
                           onPressed: () {
-                            context.go('${RoutePaths.login}?redirect=${RoutePaths.driverOnboarding}');
+                            context.go(
+                                '${RoutePaths.login}?redirect=${RoutePaths.driverOnboarding}');
                           },
                           child: const Text('Go to Login'),
                         ),
@@ -133,71 +137,77 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                     ),
                   )
                 : Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: Theme.of(context).colorScheme.copyWith(
-                  primary: Theme.of(context).primaryColor,
-                ),
-          ),
-          child: Stepper(
-            currentStep: _currentStep,
-            onStepContinue: _currentStep == 3 ? null : _onStepContinue,
-            onStepCancel: _onStepCancel,
-            onStepTapped: (step) => setState(() => _currentStep = step),
-            controlsBuilder: (context, details) {
-              // Hide controls on last step (has custom submit button)
-              if (_currentStep == 3) {
-                return const SizedBox.shrink();
-              }
-              return Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Row(
-                  children: [
-                    ElevatedButton(
-                      onPressed: details.onStepContinue,
-                      child: const Text('Continue'),
+                    data: Theme.of(context).copyWith(
+                      colorScheme: Theme.of(context).colorScheme.copyWith(
+                            primary: Theme.of(context).primaryColor,
+                          ),
                     ),
-                    const SizedBox(width: 8),
-                    if (_currentStep > 0)
-                      TextButton(
-                        onPressed: details.onStepCancel,
-                        child: const Text('Back'),
-                      ),
-                  ],
-                ),
-              );
-            },
-            steps: [
-              Step(
-                title: const Text('Personal Information'),
-                content: _buildPersonalInfoStep(),
-                isActive: _currentStep >= 0,
-                state:
-                    _currentStep > 0 ? StepState.complete : StepState.indexed,
-              ),
-              Step(
-                title: const Text('Vehicle Information'),
-                content: _buildVehicleInfoStep(),
-                isActive: _currentStep >= 1,
-                state:
-                    _currentStep > 1 ? StepState.complete : StepState.indexed,
-              ),
-              Step(
-                title: const Text('Document Upload'),
-                content: _buildDocumentUploadStep(),
-                isActive: _currentStep >= 2,
-                state:
-                    _currentStep > 2 ? StepState.complete : StepState.indexed,
-              ),
-              Step(
-                title: const Text('Review & Submit'),
-                content: _buildReviewStep(),
-                isActive: _currentStep >= 3,
-                state:
-                    _currentStep == 3 ? StepState.indexed : StepState.disabled,
-              ),
-            ],
-          ),
-        ),
+                    child: Stepper(
+                      currentStep: _currentStep,
+                      onStepContinue:
+                          _currentStep == 3 ? null : _onStepContinue,
+                      onStepCancel: _onStepCancel,
+                      onStepTapped: (step) =>
+                          setState(() => _currentStep = step),
+                      controlsBuilder: (context, details) {
+                        // Hide controls on last step (has custom submit button)
+                        if (_currentStep == 3) {
+                          return const SizedBox.shrink();
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Row(
+                            children: [
+                              ElevatedButton(
+                                onPressed: details.onStepContinue,
+                                child: const Text('Continue'),
+                              ),
+                              const SizedBox(width: 8),
+                              if (_currentStep > 0)
+                                TextButton(
+                                  onPressed: details.onStepCancel,
+                                  child: const Text('Back'),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                      steps: [
+                        Step(
+                          title: const Text('Personal Information'),
+                          content: _buildPersonalInfoStep(),
+                          isActive: _currentStep >= 0,
+                          state: _currentStep > 0
+                              ? StepState.complete
+                              : StepState.indexed,
+                        ),
+                        Step(
+                          title: const Text('Vehicle Information'),
+                          content: _buildVehicleInfoStep(),
+                          isActive: _currentStep >= 1,
+                          state: _currentStep > 1
+                              ? StepState.complete
+                              : StepState.indexed,
+                        ),
+                        Step(
+                          title: const Text('Document Upload'),
+                          content: _buildDocumentUploadStep(),
+                          isActive: _currentStep >= 2,
+                          state: _currentStep > 2
+                              ? StepState.complete
+                              : StepState.indexed,
+                        ),
+                        Step(
+                          title: const Text('Review & Submit'),
+                          content: _buildReviewStep(),
+                          isActive: _currentStep >= 3,
+                          state: _currentStep == 3
+                              ? StepState.indexed
+                              : StepState.disabled,
+                        ),
+                      ],
+                    ),
+                  ),
       );
 
   Widget _buildPersonalInfoStep() => Form(
@@ -231,6 +241,28 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
 
   Widget _buildVehicleInfoStep() => Column(
         children: [
+          const SizedBox(height: 16),
+          DropdownButtonFormField<VehicleType>(
+            initialValue: _selectedVehicleType,
+            decoration: const InputDecoration(
+              labelText: 'Vehicle Type',
+              prefixIcon: Icon(Icons.commute),
+              border: OutlineInputBorder(),
+            ),
+            items: VehicleType.values
+                .map((type) => DropdownMenuItem(
+                      value: type,
+                      child: Text(_getVehicleTypeLabel(type)),
+                    ))
+                .toList(),
+            onChanged: (VehicleType? newValue) {
+              if (newValue != null) {
+                setState(() {
+                  _selectedVehicleType = newValue;
+                });
+              }
+            },
+          ),
           const SizedBox(height: 16),
           TextFormField(
             controller: _vehicleMakeController,
@@ -284,6 +316,19 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
           ),
         ],
       );
+
+  String _getVehicleTypeLabel(VehicleType type) {
+    switch (type) {
+      case VehicleType.car:
+        return 'Car';
+      case VehicleType.motorcycle:
+        return 'Motorcycle';
+      case VehicleType.bicycle:
+        return 'Bicycle';
+      case VehicleType.van:
+        return 'Van';
+    }
+  }
 
   Widget _buildDocumentUploadStep() => Column(
         children: [
@@ -385,6 +430,8 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
           ),
           const SizedBox(height: 16),
           _buildReviewItem('License Number', _licenseController.text),
+          _buildReviewItem(
+              'Vehicle Type', _getVehicleTypeLabel(_selectedVehicleType)),
           _buildReviewItem('Vehicle Make', _vehicleMakeController.text),
           _buildReviewItem('Vehicle Model', _vehicleModelController.text),
           _buildReviewItem('License Plate', _vehiclePlateController.text),
@@ -535,7 +582,6 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       // Get current user
       final authRepository = GetIt.instance<AuthRepository>();
       final userResult = await authRepository.getCurrentUser();
-
       final user = userResult.fold(
         (failure) => throw Exception('User not found: ${failure.message}'),
         (user) => user,
@@ -550,7 +596,7 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
       // Create vehicle info
       final vehicleInfo = VehicleInfo(
         plate: _vehiclePlateController.text.trim(),
-        type: VehicleType.car, // Default to car for now
+        type: _selectedVehicleType,
         make: _vehicleMakeController.text.trim(),
         model: _vehicleModelController.text.trim(),
         year: year,
@@ -590,6 +636,31 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
 
           if (!mounted) return;
 
+          // After sync, fetch the updated driver record from backend
+          if (syncedSuccessfully) {
+            // Give the sync a moment to complete
+            await Future.delayed(const Duration(milliseconds: 500));
+
+            // Fetch driver by user ID to get the server-generated data
+            final updatedResult =
+                await driverRepository.getDriverByUserId(user.id.value);
+            print('Sinched with backedn and retrieved data');
+            updatedResult.fold(
+              (failure) {
+                // Log but don't block - local record still exists
+                print(
+                    'Note: Could not fetch updated driver record: ${failure.message}');
+              },
+              (updatedDriver) {
+                // Driver record is now synced with backend
+                print(
+                    'Driver record synced successfully with ID: ${updatedDriver.id}');
+              },
+            );
+          }
+
+          if (!mounted) return;
+
           // Show success dialog with appropriate message
           showDialog(
             context: context,
@@ -605,12 +676,12 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
               content: Text(
                 syncedSuccessfully
                     ? 'Your driver application has been submitted to our servers successfully.\n\n'
-                      'Our team will review your application within 24-48 hours. '
-                      'You will receive a notification once your application is approved.\n\n'
-                      'You can view your application status in the driver section.'
+                        'Our team will review your application within 24-48 hours. '
+                        'You will receive a notification once your application is approved.\n\n'
+                        'You can view your application status in the driver section.'
                     : 'Your driver application has been saved locally.\n\n'
-                      'It will be submitted automatically when you have an internet connection.\n\n'
-                      'You can view your application status in the driver section.',
+                        'It will be submitted automatically when you have an internet connection.\n\n'
+                        'You can view your application status in the driver section.',
               ),
               actions: [
                 ElevatedButton(

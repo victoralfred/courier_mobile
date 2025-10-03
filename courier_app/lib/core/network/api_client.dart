@@ -109,9 +109,9 @@ class ApiClient {
         csrfTokenManager: manager,
         useNullableGetter: true, // Use getTokenOrNull to avoid exceptions
         excludedPaths: [
-          '/api/v1/users/auth',
-          '/api/v1/users/refresh',
-          '/api/v1/auth/csrf',
+          '/users/auth',
+          '/users/refresh',
+          '/auth/csrf',
         ],
       ),
     );
@@ -153,9 +153,9 @@ class ApiClient {
           csrfTokenManager: _csrfTokenManager!,
           useNullableGetter: true, // Use getTokenOrNull to avoid exceptions
           excludedPaths: [
-            '/api/v1/users/auth',
-            '/api/v1/users/refresh',
-            '/api/v1/auth/csrf',
+            '/users/auth',
+            '/users/refresh',
+            '/auth/csrf',
           ],
         ),
       );
@@ -192,9 +192,9 @@ class ApiClient {
       // Attempt to refresh the token
       final refreshToken = _refreshToken;
       if (refreshToken != null && refreshToken.isNotEmpty) {
-        // Call refresh endpoint
+        // Call refresh endpoint (path relative to baseUrl which already includes /api/v1)
         final response = await _dio.post(
-          '/auth/refresh',
+          '/users/refresh',
           data: {'refresh_token': refreshToken},
           options: Options(
             headers: {

@@ -99,6 +99,27 @@ class DriverDao extends DatabaseAccessor<AppDatabase> with _$DriverDaoMixin {
     );
   }
 
+  /// Update driver ID and status after backend sync
+  /// Used when a local driver is synced to backend and we get back the server-generated ID
+  Future<void> updateDriverIdAndStatus({
+    required String localId,
+    required String backendId,
+    required String status,
+  }) async {
+    final driver = await getDriverById(localId);
+    if (driver != null) {
+      // Delete old record with local ID
+      await deleteDriver(localId);
+
+      // Insert new record with backend ID
+      await upsertDriver(driver.copyWith(
+        id: backendId,
+        status: status,
+        lastSyncedAt: Value(DateTime.now()),
+      ));
+    }
+  }
+
   /// Watch driver by ID for realtime updates
   Stream<DriverTableData?> watchDriverById(String id) =>
       (select(driverTable)..where((d) => d.id.equals(id))).watchSingleOrNull();

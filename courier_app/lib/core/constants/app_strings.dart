@@ -66,8 +66,7 @@ class AppStrings {
       'Multiplier cannot be negative';
 
   // Error Messages - Coordinate/Location
-  static const String errorCoordinateInvalidLatitude =
-      'Invalid latitude value';
+  static const String errorCoordinateInvalidLatitude = 'Invalid latitude value';
   static const String errorCoordinateInvalidLongitude =
       'Invalid longitude value';
   static const String errorCoordinateOutsideNigeria =
@@ -108,7 +107,8 @@ class AppStrings {
   static const String errorDriverInvalidPhone = 'Invalid Nigerian phone number';
   static const String errorDriverEmptyLicenseNumber =
       'License number cannot be empty';
-  static const String errorDriverInvalidRating = 'Rating must be between 0 and 5';
+  static const String errorDriverInvalidRating =
+      'Rating must be between 0 and 5';
 
   // VehicleInfo Error Messages
   static const String errorVehicleEmptyPlate = 'Vehicle plate cannot be empty';
@@ -132,7 +132,8 @@ class AppStrings {
   static const String errorTokenRefreshFailed =
       'Failed to refresh authentication token';
   static const String errorCsrfTokenFailed = 'Failed to obtain CSRF token';
-  static const String errorCsrfTokenNotFound = 'CSRF token not found in response';
+  static const String errorCsrfTokenNotFound =
+      'CSRF token not found in response';
 
   // Error Codes - Authentication
   static const String errorCodeNoToken = 'NO_TOKEN';
@@ -446,10 +447,10 @@ class AppStrings {
   static const String oauthValueCommon = 'common';
 
   // OAuth2 API Endpoints
-  static const String oauthApiCallback = '/api/v1/auth/oauth/callback';
-  static const String oauthApiRefresh = '/api/v1/auth/refresh';
-  static const String oauthApiRevoke = '/api/v1/auth/revoke';
-  static const String oauthApiUsersMe = '/api/v1/users/me';
+  static const String oauthApiCallback = '/auth/oauth/callback';
+  static const String oauthApiRefresh = '/auth/refresh';
+  static const String oauthApiRevoke = '/auth/revoke';
+  static const String oauthApiUsersMe = '/users/me';
 
   // OAuth2 Field Names
   static const String oauthFieldProvider = 'provider';
@@ -535,9 +536,11 @@ class AppStrings {
   static const String forgotPassword = 'Forgot Password?';
   static const String resetPasswordTitle = 'Reset Password';
   static const String forgotPasswordQuestion = 'Forgot your password?';
-  static const String forgotPasswordDescription = 'Enter your email address and we\'ll send you a link to reset your password.';
+  static const String forgotPasswordDescription =
+      'Enter your email address and we\'ll send you a link to reset your password.';
   static const String sendResetLink = 'Send Reset Link';
-  static const String passwordResetLinkSent = 'Password reset link sent to your email';
+  static const String passwordResetLinkSent =
+      'Password reset link sent to your email';
   static const String backToLogin = 'Back to Login';
   static const String signUpPrompt = "Don't have an account? ";
   static const String signUp = 'Sign Up';
@@ -617,7 +620,8 @@ class AppStrings {
 
   // Storage Keys - Biometric
   static const String keyBiometricEnabled = 'biometric_enabled';
-  static const String keyBiometricEnrollmentShown = 'biometric_enrollment_shown';
+  static const String keyBiometricEnrollmentShown =
+      'biometric_enrollment_shown';
 
   // Repository Error Messages
   static const String errorUserNotAuthenticated = 'User not authenticated';

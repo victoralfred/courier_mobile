@@ -81,7 +81,8 @@ class SyncService {
       debugPrint('Endpoint: $endpoint');
       debugPrint('Entity: ${item.entityType} - ${item.entityId}');
       debugPrint('Operation: ${item.operation}');
-      debugPrint('Current auth token: ${_apiClient.getAuthToken() ?? "NO TOKEN"}');
+      debugPrint(
+          'Current auth token: ${_apiClient.getAuthToken() ?? "NO TOKEN"}');
       debugPrint('Data being sent: ${jsonEncode(data)}');
       debugPrint('========================');
 
@@ -108,7 +109,10 @@ class SyncService {
       if (response.statusCode != null &&
           response.statusCode! >= 200 &&
           response.statusCode! < 300) {
-        // Success - mark as completed
+        // Success - update local database with backend response if applicable
+        await _updateLocalRecordFromResponse(item, response);
+
+        // Mark as completed
         await _database.syncQueueDao.markAsCompleted(item.id);
         return true;
       } else if (response.statusCode == 409) {
@@ -141,6 +145,39 @@ class SyncService {
         error: 'Sync error: ${e.toString()}',
       );
       return false;
+    }
+  }
+
+  /// Update local database record with backend response
+  Future<void> _updateLocalRecordFromResponse(
+    SyncQueueTableData item,
+    Response response,
+  ) async {
+    try {
+      // Only update for driver registration
+      if (item.entityType == 'driver' && item.operation == 'create') {
+        final responseData = response.data;
+        if (responseData != null && responseData is Map<String, dynamic>) {
+          // Extract driver ID from response
+          final backendDriverId = responseData['driver_id'] as String?;
+          final status = responseData['status'] as String?;
+
+          if (backendDriverId != null) {
+            // Update local driver record with backend ID and status
+            await _database.driverDao.updateDriverIdAndStatus(
+              localId: item.entityId,
+              backendId: backendDriverId,
+              status: status ?? 'pending',
+            );
+
+            debugPrint(
+                'Updated local driver ${item.entityId} with backend ID: $backendDriverId');
+          }
+        }
+      }
+    } catch (e) {
+      // Log but don't fail sync if update fails
+      debugPrint('Warning: Could not update local record from response: $e');
     }
   }
 
