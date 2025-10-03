@@ -50,3 +50,4 @@ app.*.map.json
 # Sensitive files with passwords
 android/gradle.properties
 **/keystore.properties
+!lib/features/driver/onboarding/WORKFLOW.md
