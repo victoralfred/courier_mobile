@@ -103,10 +103,18 @@ class _SplashScreenState extends State<SplashScreen>
                   context.go(RoutePaths.driverOnboarding);
                 },
                 (driver) {
-                  // Driver record exists - navigate to status screen
+                  // Driver record exists - navigate based on status
                   print('SplashScreen: Driver record found - Status: ${driver.status.name}');
-                  print('SplashScreen: Navigating to status screen...');
-                  context.go(RoutePaths.driverStatus);
+
+                  if (driver.status.name == 'approved') {
+                    // Approved drivers go to home
+                    print('SplashScreen: Navigating to driver home...');
+                    context.go(RoutePaths.driverHome);
+                  } else {
+                    // Non-approved drivers go to status screen
+                    print('SplashScreen: Navigating to status screen...');
+                    context.go(RoutePaths.driverStatus);
+                  }
                 },
               );
               break;

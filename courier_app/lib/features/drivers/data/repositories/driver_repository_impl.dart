@@ -196,7 +196,7 @@ class DriverRepositoryImpl implements DriverRepository {
         entityId: driverId,
         operation: 'update_availability',
         payload: jsonEncode({
-          'endpoint': 'PUT /api/v1/drivers/$driverId/availability',
+          'endpoint': 'PUT /drivers/$driverId/availability',
           'data': {'availability': availability.name},
         }),
       );
@@ -230,7 +230,7 @@ class DriverRepositoryImpl implements DriverRepository {
         entityId: driverId,
         operation: 'update_location',
         payload: jsonEncode({
-          'endpoint': 'PUT /api/v1/drivers/$driverId/location',
+          'endpoint': 'PUT /drivers/$driverId/location',
           'data': {
             'latitude': location.latitude,
             'longitude': location.longitude,
@@ -262,7 +262,7 @@ class DriverRepositoryImpl implements DriverRepository {
         entityId: driverId,
         operation: 'update_location',
         payload: jsonEncode({
-          'endpoint': 'PUT /api/v1/drivers/$driverId/location',
+          'endpoint': 'PUT /drivers/$driverId/location',
           'data': {
             'latitude': null,
             'longitude': null,
@@ -336,7 +336,7 @@ class DriverRepositoryImpl implements DriverRepository {
         entityId: driverId,
         operation: 'delete',
         payload: jsonEncode({
-          'endpoint': 'DELETE /api/v1/drivers/$driverId',
+          'endpoint': 'DELETE /drivers/$driverId',
           'data': null,
         }),
       );
@@ -364,7 +364,7 @@ class DriverRepositoryImpl implements DriverRepository {
           entityId: driverData.id,
           operation: 'delete',
           payload: jsonEncode({
-            'endpoint': 'DELETE /api/v1/drivers/${driverData.id}',
+            'endpoint': 'DELETE /drivers/${driverData.id}',
             'data': null,
           }),
         );

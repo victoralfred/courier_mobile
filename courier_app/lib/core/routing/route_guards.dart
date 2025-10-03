@@ -47,21 +47,30 @@ class AuthGuard {
       // Get user to determine their role
       final userResult = await authRepository.getCurrentUser();
 
-      return userResult.fold(
-        (failure) => RoutePaths.login,
-        (user) {
+      return await userResult.fold(
+        (failure) async => RoutePaths.login,
+        (user) async {
           // Redirect based on role
           switch (user.role.type) {
             case UserRoleType.customer:
             case UserRoleType.admin: // Admin users go to customer home
               return RoutePaths.customerHome;
             case UserRoleType.driver:
-              // Check if driver has completed onboarding
-              if (user.role.permissions.contains('driver.verified')) {
-                return RoutePaths.driverHome;
-              } else {
-                return RoutePaths.driverOnboarding;
-              }
+              // Check driver status from database
+              final driverResult =
+                  await driverRepository.getDriverByUserId(user.id.value);
+
+              return driverResult.fold(
+                (failure) => RoutePaths.driverOnboarding,
+                (driver) {
+                  // Redirect based on driver status
+                  if (driver.status.name == 'approved') {
+                    return RoutePaths.driverHome;
+                  } else {
+                    return RoutePaths.driverStatus;
+                  }
+                },
+              );
           }
         },
       );
@@ -160,13 +169,39 @@ class RoleGuard {
               await driverRepository.getDriverByUserId(user.id.value);
 
           // If no driver record exists, redirect to onboarding
-          final hasDriverRecord = driverResult.isRight();
-          print('RouteGuard: Has driver record: $hasDriverRecord');
-          if (!hasDriverRecord) {
-            print('RouteGuard: Redirecting to onboarding (no driver record)');
-            return RoutePaths.driverOnboarding;
-          }
-          print('RouteGuard: Driver record exists, allowing navigation');
+          return driverResult.fold(
+            (failure) {
+              print('RouteGuard: No driver record - redirecting to onboarding');
+              return RoutePaths.driverOnboarding;
+            },
+            (driver) {
+              print('RouteGuard: Driver record found - Status: ${driver.status.name}');
+
+              // Redirect based on status and current path
+              if (state.uri.path == RoutePaths.driverStatus) {
+                // Allow access to status screen for non-approved drivers
+                if (driver.status.name != 'approved') {
+                  print('RouteGuard: Driver not approved, allowing status screen');
+                  return null;
+                }
+                // Redirect approved drivers to home
+                print('RouteGuard: Driver approved, redirecting to home');
+                return RoutePaths.driverHome;
+              } else if (state.uri.path == RoutePaths.driverHome) {
+                // Redirect non-approved drivers to status screen
+                if (driver.status.name != 'approved') {
+                  print('RouteGuard: Driver not approved, redirecting to status screen');
+                  return RoutePaths.driverStatus;
+                }
+                // Allow approved drivers to access home
+                print('RouteGuard: Driver approved, allowing home access');
+                return null;
+              }
+
+              // For other paths, allow navigation if driver has a record
+              return null;
+            },
+          );
         }
 
         return null; // User has driver role and driver record
