@@ -311,9 +311,16 @@ class LoginScreen extends StatelessWidget {
           },
           (driver) {
             // Successfully fetched from backend and synced to local DB
-            print('LoginScreen: Driver found on backend, navigating to status screen');
+            print('LoginScreen: Driver found on backend - Status: ${driver.status.name}');
             if (context.mounted) {
-              context.go(RoutePaths.driverStatus);
+              // Navigate based on driver status
+              if (driver.status.name == 'approved') {
+                print('LoginScreen: Driver approved, navigating to home');
+                context.go(RoutePaths.driverHome);
+              } else {
+                print('LoginScreen: Driver not approved, navigating to status screen');
+                context.go(RoutePaths.driverStatus);
+              }
             }
           },
         );
@@ -350,10 +357,16 @@ class LoginScreen extends StatelessWidget {
         }
       },
       (driver) {
-        // Driver record exists - navigate to status screen
-        print('LoginScreen: Driver record found locally, navigating to status screen');
+        // Driver record exists - navigate based on status
+        print('LoginScreen: Driver record found locally - Status: ${driver.status.name}');
         if (context.mounted) {
-          context.go(RoutePaths.driverStatus);
+          if (driver.status.name == 'approved') {
+            print('LoginScreen: Driver approved, navigating to home');
+            context.go(RoutePaths.driverHome);
+          } else {
+            print('LoginScreen: Driver not approved, navigating to status screen');
+            context.go(RoutePaths.driverStatus);
+          }
         }
       },
     );
