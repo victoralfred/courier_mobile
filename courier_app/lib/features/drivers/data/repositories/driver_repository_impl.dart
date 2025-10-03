@@ -19,8 +19,13 @@ import 'package:delivery_app/features/drivers/domain/value_objects/driver_status
 /// 4. Sync with backend when online
 class DriverRepositoryImpl implements DriverRepository {
   final AppDatabase _database;
+  final dynamic _apiClient; // ApiClient - using dynamic to avoid circular dependency
 
-  DriverRepositoryImpl({required AppDatabase database}) : _database = database;
+  DriverRepositoryImpl({
+    required AppDatabase database,
+    dynamic apiClient,
+  })  : _database = database,
+        _apiClient = apiClient;
 
   @override
   Future<Either<Failure, Driver>> getDriverById(String id) async {
@@ -57,6 +62,47 @@ class DriverRepositoryImpl implements DriverRepository {
     } catch (e) {
       return Left(CacheFailure(
           message: 'Failed to get driver by user ID: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Driver>> fetchDriverFromBackend(String userId) async {
+    try {
+      if (_apiClient == null) {
+        return const Left(
+          NetworkFailure(message: 'API client not available'),
+        );
+      }
+
+      // Fetch driver from backend
+      final response = await _apiClient.get('/drivers/user/$userId');
+
+      if (response.statusCode == 200 && response.data != null) {
+        final data = response.data as Map<String, dynamic>;
+
+        // Map backend response to Driver entity
+        final driver = DriverMapper.fromBackendJson(data);
+
+        // Save to local database (overwrites existing record)
+        final driverData = DriverMapper.toDatabase(driver);
+        await _database.driverDao.upsertDriver(driverData);
+
+        return Right(driver);
+      } else if (response.statusCode == 404) {
+        return const Left(
+          NetworkFailure(message: 'Driver not found on backend'),
+        );
+      } else {
+        return Left(
+          NetworkFailure(
+            message: 'Failed to fetch driver: HTTP ${response.statusCode}',
+          ),
+        );
+      }
+    } catch (e) {
+      return Left(
+        NetworkFailure(message: 'Failed to fetch driver from backend: ${e.toString()}'),
+      );
     }
   }
 
@@ -291,6 +337,35 @@ class DriverRepositoryImpl implements DriverRepository {
     } catch (e) {
       return Left(
           CacheFailure(message: 'Failed to delete driver: ${e.toString()}'));
+    }
+  }
+
+  @override
+  Future<Either<Failure, bool>> deleteDriverByUserId(String userId) async {
+    try {
+      // First, get the driver to find the driver ID for sync queue
+      final driverData = await _database.driverDao.getDriverByUserId(userId);
+
+      // Delete from local database
+      await _database.driverDao.deleteDriverByUserId(userId);
+
+      // Queue for sync when network is available (if driver exists)
+      if (driverData != null) {
+        await _database.syncQueueDao.addToQueue(
+          entityType: 'driver',
+          entityId: driverData.id,
+          operation: 'delete',
+          payload: jsonEncode({
+            'endpoint': 'DELETE /api/v1/drivers/${driverData.id}',
+            'data': null,
+          }),
+        );
+      }
+
+      return const Right(true);
+    } catch (e) {
+      return Left(
+          CacheFailure(message: 'Failed to delete driver by user ID: ${e.toString()}'));
     }
   }
 

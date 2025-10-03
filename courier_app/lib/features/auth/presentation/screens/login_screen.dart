@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
+import 'package:delivery_app/core/network/connectivity_service.dart';
 import 'package:delivery_app/core/routing/route_names.dart';
 import 'package:delivery_app/features/auth/domain/entities/user_role.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_bloc.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_event.dart';
 import 'package:delivery_app/features/auth/presentation/blocs/login/login_state.dart';
+import 'package:delivery_app/features/drivers/domain/repositories/driver_repository.dart';
 
 class LoginScreen extends StatelessWidget {
   final String? redirectPath;
@@ -44,13 +47,7 @@ class LoginScreen extends StatelessWidget {
                       context.go(RoutePaths.customerHome);
                       break;
                     case UserRoleType.driver:
-                      if (state.user!.role.permissions.contains('driver.verified')) {
-                        print('LoginScreen: Navigating to driver home');
-                        context.go(RoutePaths.driverHome);
-                      } else {
-                        print('LoginScreen: Navigating to driver onboarding');
-                        context.go(RoutePaths.driverOnboarding);
-                      }
+                      _handleDriverNavigation(context, state.user!.id.value);
                       break;
                   }
                 }
@@ -282,4 +279,83 @@ class LoginScreen extends StatelessWidget {
           ),
         ],
       );
+
+  /// Handle navigation for driver users
+  Future<void> _handleDriverNavigation(
+    BuildContext context,
+    String userId,
+  ) async {
+    if (!context.mounted) return;
+
+    try {
+      final driverRepository = GetIt.instance<DriverRepository>();
+      final connectivityService = GetIt.instance<ConnectivityService>();
+
+      // Check if online
+      final isOnline = await connectivityService.isOnline();
+
+      if (!context.mounted) return;
+
+      if (isOnline) {
+        // Try to fetch driver from backend first
+        print('LoginScreen: Online - fetching driver from backend...');
+        final backendResult = await driverRepository.fetchDriverFromBackend(userId);
+
+        if (!context.mounted) return;
+
+        await backendResult.fold(
+          (failure) async {
+            // Backend fetch failed, check local database
+            print('LoginScreen: Backend fetch failed - ${failure.message}, checking local DB...');
+            await _checkLocalDriverRecord(context, userId, driverRepository);
+          },
+          (driver) {
+            // Successfully fetched from backend and synced to local DB
+            print('LoginScreen: Driver found on backend, navigating to status screen');
+            if (context.mounted) {
+              context.go(RoutePaths.driverStatus);
+            }
+          },
+        );
+      } else {
+        // Offline - check local database only
+        print('LoginScreen: Offline - checking local database...');
+        await _checkLocalDriverRecord(context, userId, driverRepository);
+      }
+    } catch (e) {
+      print('LoginScreen: Error handling driver navigation: $e');
+      // On error, default to onboarding
+      if (context.mounted) {
+        context.go(RoutePaths.driverOnboarding);
+      }
+    }
+  }
+
+  /// Check local database for driver record
+  Future<void> _checkLocalDriverRecord(
+    BuildContext context,
+    String userId,
+    DriverRepository driverRepository,
+  ) async {
+    final localResult = await driverRepository.getDriverByUserId(userId);
+
+    if (!context.mounted) return;
+
+    localResult.fold(
+      (failure) {
+        // No driver record found - navigate to onboarding
+        print('LoginScreen: No driver record found locally, navigating to onboarding');
+        if (context.mounted) {
+          context.go(RoutePaths.driverOnboarding);
+        }
+      },
+      (driver) {
+        // Driver record exists - navigate to status screen
+        print('LoginScreen: Driver record found locally, navigating to status screen');
+        if (context.mounted) {
+          context.go(RoutePaths.driverStatus);
+        }
+      },
+    );
+  }
 }

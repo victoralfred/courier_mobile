@@ -86,9 +86,13 @@ class DriverDao extends DatabaseAccessor<AppDatabase> with _$DriverDaoMixin {
             ..where((d) => d.status.equals('approved')))
           .get();
 
-  /// Delete driver
+  /// Delete driver by ID
   Future<int> deleteDriver(String driverId) async =>
       (delete(driverTable)..where((d) => d.id.equals(driverId))).go();
+
+  /// Delete driver by user ID
+  Future<int> deleteDriverByUserId(String userId) async =>
+      (delete(driverTable)..where((d) => d.userId.equals(userId))).go();
 
   /// Mark driver as synced
   Future<void> markAsSynced(String driverId) async {

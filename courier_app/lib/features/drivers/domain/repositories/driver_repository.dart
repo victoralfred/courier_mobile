@@ -12,9 +12,13 @@ abstract class DriverRepository {
   /// Returns [Driver] on success or [Failure] on error
   Future<Either<Failure, Driver>> getDriverById(String id);
 
-  /// Gets a driver by user ID
+  /// Gets a driver by user ID (from local database)
   /// Returns [Driver] on success or [Failure] on error
   Future<Either<Failure, Driver>> getDriverByUserId(String userId);
+
+  /// Fetches driver from backend by user ID and syncs to local database
+  /// Returns [Driver] on success or [Failure] on error
+  Future<Either<Failure, Driver>> fetchDriverFromBackend(String userId);
 
   /// Creates or updates a driver profile
   /// Returns [Driver] on success or [Failure] on error
@@ -57,9 +61,13 @@ abstract class DriverRepository {
   /// Returns list of [Driver] on success or [Failure] on error
   Future<Either<Failure, List<Driver>>> getAvailableDrivers();
 
-  /// Deletes a driver profile
+  /// Deletes a driver profile by driver ID
   /// Returns [bool] on success or [Failure] on error
   Future<Either<Failure, bool>> deleteDriver(String driverId);
+
+  /// Deletes a driver profile by user ID
+  /// Returns [bool] on success or [Failure] on error
+  Future<Either<Failure, bool>> deleteDriverByUserId(String userId);
 
   /// Watches a driver by ID for real-time updates
   /// Returns a stream of [Driver] or null if not found

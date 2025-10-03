@@ -39,6 +39,38 @@ class DriverMapper {
         totalRatings: data.totalRatings,
       );
 
+  /// Converts a backend JSON response to [Driver] domain entity
+  static Driver fromBackendJson(Map<String, dynamic> json) => Driver(
+        id: json['driver_id'] as String,
+        userId: json['user_id'] as String,
+        firstName: json['first_name'] as String,
+        lastName: json['last_name'] as String,
+        email: json['email'] as String,
+        phone: json['phone'] as String,
+        licenseNumber: json['license_number'] as String,
+        vehicleInfo: VehicleInfo(
+          plate: json['vehicle_plate'] as String,
+          type: _parseVehicleType(json['vehicle_type'] as String),
+          make: json['vehicle_make'] as String,
+          model: json['vehicle_model'] as String,
+          year: json['vehicle_year'] as int,
+          color: json['vehicle_color'] as String,
+        ),
+        status: _parseDriverStatus(json['status'] as String),
+        availability: _parseAvailabilityStatus(json['availability'] as String? ?? 'offline'),
+        currentLocation: json['current_latitude'] != null && json['current_longitude'] != null
+            ? Coordinate(
+                latitude: (json['current_latitude'] as num).toDouble(),
+                longitude: (json['current_longitude'] as num).toDouble(),
+              )
+            : null,
+        lastLocationUpdate: json['last_location_update'] != null
+            ? DateTime.parse(json['last_location_update'] as String)
+            : null,
+        rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
+        totalRatings: json['total_ratings'] as int? ?? 0,
+      );
+
   /// Converts a [Driver] domain entity to [DriverTableData]
   static DriverTableData toDatabase(Driver driver) => DriverTableData(
         id: driver.id,

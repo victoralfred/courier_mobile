@@ -268,6 +268,23 @@ class _DriverStatusScreenState extends State<DriverStatusScreen> {
               ),
             ),
           ],
+
+          const SizedBox(height: 16),
+
+          // Delete Application Button
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: OutlinedButton.icon(
+              onPressed: _showDeleteConfirmation,
+              icon: const Icon(Icons.delete_outline),
+              label: const Text('Delete Application'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.red,
+                side: const BorderSide(color: Colors.red),
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -325,6 +342,96 @@ class _DriverStatusScreenState extends State<DriverStatusScreen> {
           ],
         ),
       );
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: const Text('Delete Application'),
+        content: const Text(
+          'Are you sure you want to delete your driver application?\n\n'
+          'This will remove all your driver information from the device and backend. '
+          'You will need to reapply if you want to become a driver again.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(dialogContext).pop();
+            },
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.of(dialogContext).pop();
+              await _deleteDriverApplication();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _deleteDriverApplication() async {
+    try {
+      // Get current user
+      final authRepository = GetIt.instance<AuthRepository>();
+      final userResult = await authRepository.getCurrentUser();
+
+      await userResult.fold(
+        (failure) {
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to get user: ${failure.message}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        },
+        (user) async {
+          // Delete driver by user ID
+          final driverRepository = GetIt.instance<DriverRepository>();
+          final result = await driverRepository.deleteDriverByUserId(user.id.value);
+
+          if (!mounted) return;
+
+          result.fold(
+            (failure) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text('Failed to delete application: ${failure.message}'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            },
+            (success) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Driver application deleted successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+
+              // Navigate to driver onboarding
+              context.go(RoutePaths.driverOnboarding);
+            },
+          );
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error deleting application: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) => Scaffold(
