@@ -33,13 +33,14 @@ void main() {
         final response = Response(
           data: {
             'success': true,
-            'data': {'csrf_token': testToken}
+            'data': {'csrf_token': testToken},
           },
           statusCode: 200,
           requestOptions: RequestOptions(path: apiPath),
         );
-        when(mockDio.get(apiPath, options: anyNamed('options')))
-            .thenAnswer((_) async => response);
+        when(
+          mockDio.get(apiPath, options: anyNamed('options')),
+        ).thenAnswer((_) async => response);
 
         // Act
         final result = await csrfTokenManager.getToken();
@@ -49,28 +50,32 @@ void main() {
         verify(mockDio.get(apiPath, options: anyNamed('options'))).called(1);
       });
 
-      test('should fetch fresh token on each call (ephemeral tokens)', () async {
-        // Arrange
-        final response = Response(
-          data: {
-            'success': true,
-            'data': {'csrf_token': testToken}
-          },
-          statusCode: 200,
-          requestOptions: RequestOptions(path: apiPath),
-        );
-        when(mockDio.get(apiPath, options: anyNamed('options')))
-            .thenAnswer((_) async => response);
+      test(
+        'should fetch fresh token on each call (ephemeral tokens)',
+        () async {
+          // Arrange
+          final response = Response(
+            data: {
+              'success': true,
+              'data': {'csrf_token': testToken},
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: apiPath),
+          );
+          when(
+            mockDio.get(apiPath, options: anyNamed('options')),
+          ).thenAnswer((_) async => response);
 
-        // Act - Multiple calls
-        await csrfTokenManager.getToken();
-        final result = await csrfTokenManager.getToken();
+          // Act - Multiple calls
+          await csrfTokenManager.getToken();
+          final result = await csrfTokenManager.getToken();
 
-        // Assert
-        expect(result, testToken);
-        // CSRF tokens are ephemeral - each call fetches a fresh token
-        verify(mockDio.get(apiPath, options: anyNamed('options'))).called(2);
-      });
+          // Assert
+          expect(result, testToken);
+          // CSRF tokens are ephemeral - each call fetches a fresh token
+          verify(mockDio.get(apiPath, options: anyNamed('options'))).called(2);
+        },
+      );
 
       test('should throw ServerException on API error', () async {
         // Arrange
@@ -111,15 +116,13 @@ void main() {
       test('should throw ServerException if token not in response', () async {
         // Arrange
         final response = Response(
-          data: {
-            'success': true,
-            'data': {}
-          }, // Missing csrf_token
+          data: {'success': true, 'data': {}}, // Missing csrf_token
           statusCode: 200,
           requestOptions: RequestOptions(path: apiPath),
         );
-        when(mockDio.get(apiPath, options: anyNamed('options')))
-            .thenAnswer((_) async => response);
+        when(
+          mockDio.get(apiPath, options: anyNamed('options')),
+        ).thenAnswer((_) async => response);
 
         // Act & Assert
         expect(
@@ -141,13 +144,14 @@ void main() {
         final response = Response(
           data: {
             'success': true,
-            'data': {'csrf_token': testToken}
+            'data': {'csrf_token': testToken},
           },
           statusCode: 200,
           requestOptions: RequestOptions(path: apiPath),
         );
-        when(mockDio.get(apiPath, options: anyNamed('options')))
-            .thenAnswer((_) async => response);
+        when(
+          mockDio.get(apiPath, options: anyNamed('options')),
+        ).thenAnswer((_) async => response);
 
         // Act
         final result = await csrfTokenManager.getTokenOrNull();
@@ -174,64 +178,82 @@ void main() {
     });
 
     group('with auth token', () {
-      test('should include auth token in request when provided', () async {
-        // Arrange
-        const authToken = 'test-auth-token';
+      test(
+        'should include auth token in request when provided',
+        () async {
+          // Arrange
+          const authToken = 'test-auth-token';
 
-        final response = Response(
-          data: {
-            'success': true,
-            'data': {'csrf_token': testToken}
-          },
-          statusCode: 200,
-          requestOptions: RequestOptions(path: apiPath),
-        );
+          final response = Response(
+            data: {
+              'success': true,
+              'data': {'csrf_token': testToken},
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: apiPath),
+          );
 
-        // Setup stub for this test
-        when(mockDio.get(apiPath, options: anyNamed('options')))
-            .thenAnswer((_) async => response);
+          // Setup stub for this test
+          when(
+            mockDio.get(
+              apiPath,
+              options: argThat(
+                predicate<Options>(
+                  (opt) =>
+                      opt.headers?['Authorization'] == 'Bearer test-auth-token',
+                ),
+                named: 'options',
+              ),
+            ),
+          ).thenAnswer((_) async => response);
 
-        // Create manager with auth token getter
-        final csrfTokenManagerWithAuth = CsrfTokenManager(
-          dio: mockDio,
-          getAuthToken: () => authToken,
-        );
+          // Create manager with auth token getter
+          final csrfTokenManagerWithAuth = CsrfTokenManager(
+            dio: mockDio,
+            getAuthToken: () => authToken,
+          );
 
-        // Act
-        final result = await csrfTokenManagerWithAuth.getToken();
+          // Act
+          final result = await csrfTokenManagerWithAuth.getToken();
 
-        // Assert
-        expect(result, testToken);
-      }, skip: 'Mockito stubbing issue - auth header testing not critical for functionality');
+          // Assert
+          expect(result, testToken);
+        },
+        skip:
+            'Mockito stubbing issue - auth header testing not critical for functionality',
+      );
 
-      test('should not include auth header when getAuthToken returns null',
-          () async {
-        // Arrange
-        final response = Response(
-          data: {
-            'success': true,
-            'data': {'csrf_token': testToken}
-          },
-          statusCode: 200,
-          requestOptions: RequestOptions(path: apiPath),
-        );
+      test(
+        'should not include auth header when getAuthToken returns null',
+        () async {
+          // Arrange
+          final response = Response(
+            data: {
+              'success': true,
+              'data': {'csrf_token': testToken},
+            },
+            statusCode: 200,
+            requestOptions: RequestOptions(path: apiPath),
+          );
 
-        clearInteractions(mockDio);
+          clearInteractions(mockDio);
 
-        when(mockDio.get(apiPath, options: anyNamed('options')))
-            .thenAnswer((_) async => response);
+          when(
+            mockDio.get(apiPath, options: anyNamed('options')),
+          ).thenAnswer((_) async => response);
 
-        final csrfTokenManagerWithAuth = CsrfTokenManager(
-          dio: mockDio,
-          getAuthToken: () => null,
-        );
+          final csrfTokenManagerWithAuth = CsrfTokenManager(
+            dio: mockDio,
+            getAuthToken: () => null,
+          );
 
-        // Act
-        final result = await csrfTokenManagerWithAuth.getToken();
+          // Act
+          final result = await csrfTokenManagerWithAuth.getToken();
 
-        // Assert
-        expect(result, testToken);
-      });
+          // Assert
+          expect(result, testToken);
+        },
+      );
     });
   });
 }
