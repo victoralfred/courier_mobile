@@ -135,7 +135,7 @@ void main() {
       when(mockLocalDataSource.storeToken(any))
           .thenAnswer((_) async => null);
 
-      when(mockApiClient.setAuthToken(any))
+      when(mockApiClient.setAuthToken(any, refreshToken: anyNamed('refreshToken')))
           .thenReturn(null);
 
       // Act
@@ -144,7 +144,7 @@ void main() {
       // Assert
       expect(result, Right(newToken.token));
       verify(mockLocalDataSource.storeToken(any));
-      verify(mockApiClient.setAuthToken(newToken.token));
+      verify(mockApiClient.setAuthToken(newToken.token, refreshToken: newToken.refreshToken));
     });
   });
 
@@ -377,7 +377,7 @@ void main() {
       when(mockLocalDataSource.storeToken(any))
           .thenAnswer((_) async => null);
 
-      when(mockApiClient.setAuthToken(any))
+      when(mockApiClient.setAuthToken(any, refreshToken: anyNamed('refreshToken')))
           .thenReturn(null);
 
       // Act
@@ -386,7 +386,7 @@ void main() {
       // Assert
       expect(result, const Right(unit));
       verify(mockLocalDataSource.storeToken(tValidToken));
-      verify(mockApiClient.setAuthToken(tValidToken.authorizationHeader));
+      verify(mockApiClient.setAuthToken(tValidToken.token, refreshToken: tValidToken.refreshToken));
       // Note: CSRF tokens are now managed automatically by CsrfInterceptor
     });
   });

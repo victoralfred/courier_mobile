@@ -149,17 +149,21 @@ class TokenManagerImpl implements TokenManager {
           type: data['token_type'] as String? ?? 'Bearer',
           issuedAt: DateTime.now(),
           expiresAt: DateTime.now().add(
-            Duration(seconds: data['expires_in'] as int? ?? 900), // Default 15 minutes
+            Duration(
+                seconds:
+                    data['expires_in'] as int? ?? 900), // Default 15 minutes
           ),
-          refreshToken: data['refresh_token'] as String? ?? currentToken.refreshToken,
+          refreshToken:
+              data['refresh_token'] as String? ?? currentToken.refreshToken,
           csrfToken: currentToken.csrfToken, // Keep existing CSRF token
         );
 
         // Store the new token
         await localDataSource.storeToken(newToken);
 
-        // Update API client with new token
-        apiClient.setAuthToken(newToken.token, refreshToken: newToken.refreshToken);
+        // Update API client with new token auth/refresh
+        apiClient.setAuthToken(newToken.token,
+            refreshToken: newToken.refreshToken);
 
         // Notify listeners
         _tokenRefreshController.add(newToken);

@@ -644,7 +644,6 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
             // Fetch driver by user ID to get the server-generated data
             final updatedResult =
                 await driverRepository.getDriverByUserId(user.id.value);
-            print('Sinched with backedn and retrieved data');
             updatedResult.fold(
               (failure) {
                 // Log but don't block - local record still exists
