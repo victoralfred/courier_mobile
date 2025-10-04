@@ -194,12 +194,15 @@ class ApiClient {
   /// );
   /// ```
   ///
+  /// **Security:**
+  /// - certificatePinner: REQUIRED - SSL certificate pinning for man-in-the-middle protection
+  /// - csrfTokenManager: REQUIRED - CSRF token management for cross-site request forgery protection
+  ///
   /// **IMPROVEMENT:**
-  /// - [High Priority] Make certificatePinner and csrfTokenManager required for production
-  /// - Add compile-time check to ensure security features are enabled in release builds
+  /// - [Low Priority] Add compile-time check to ensure security features are enabled in release builds
   factory ApiClient.production({
-    CertificatePinner? certificatePinner,
-    CsrfTokenManager? csrfTokenManager,
+    required CertificatePinner certificatePinner,
+    required CsrfTokenManager csrfTokenManager,
   }) {
     AppConfig.setEnvironment(Environment.production);
     return ApiClient._(
