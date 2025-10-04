@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:dio/io.dart';
 import 'package:crypto/crypto.dart';
+import 'package:delivery_app/core/services/app_logger.dart';
 
 /// [CertificatePinner] - SSL/TLS certificate pinning service for preventing man-in-the-middle attacks
 ///
@@ -248,6 +249,9 @@ abstract class CertificatePinner {
 /// - [MEDIUM PRIORITY] Make development allow-all behavior configurable
 ///   - Add strict mode that fails if no pins configured
 class CertificatePinnerImpl implements CertificatePinner {
+  /// Logger instance for security operations
+  static final _logger = AppLogger('Security');
+
   /// Map of domain names to list of pinned certificate hashes
   ///
   /// **Structure:**
@@ -321,11 +325,13 @@ class CertificatePinnerImpl implements CertificatePinner {
     final pinnedHashes = _pinnedCertificates[domain]!;
     final isValid = pinnedHashes.contains(certHash);
 
-    // Log failure for debugging (remove in production)
+    // Log failure for security monitoring (hashes are NOT logged for security)
     if (!isValid) {
-      print('Certificate pinning failed for $domain');
-      print('Expected one of: ${pinnedHashes.join(", ")}');
-      print('Got: $certHash');
+      _logger.error('Certificate pinning validation failed', metadata: {
+        'domain': domain,
+        'expectedPinsCount': pinnedHashes.length,
+        // DO NOT log actual hashes - security risk
+      });
     }
 
     return isValid;
