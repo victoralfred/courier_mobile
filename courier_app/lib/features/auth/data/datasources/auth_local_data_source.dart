@@ -6,7 +6,11 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:injectable/injectable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Abstract interface for authentication local data operations
+/// [AuthLocalDataSource] - Abstract interface for authentication local data operations
+///
+/// **Contract Definition:**
+/// Defines operations for local caching and secure storage of authentication data.
+/// Implementations use platform-specific storage (SharedPreferences, FlutterSecureStorage).
 abstract class AuthLocalDataSource {
   /// Caches the current user data
   Future<void> cacheUser(UserModel user);
@@ -48,7 +52,137 @@ abstract class AuthLocalDataSource {
   Future<void> setLastLoginTime(DateTime time);
 }
 
-/// Implementation of authentication local data source using Flutter Secure Storage
+/// [AuthLocalDataSourceImpl] - Local caching and secure storage for authentication data
+///
+/// **What it does:**
+/// - Caches user data in SharedPreferences for fast access
+/// - Stores sensitive biometric credentials in FlutterSecureStorage
+/// - Manages biometric authentication preferences
+/// - Tracks first app launch for onboarding flow
+/// - Records last login timestamp for session management
+/// - Stores user role for quick role-based access control
+///
+/// **Why it exists:**
+/// - Provides offline access to user data (no network required)
+/// - Enables fast app launch (cached user available immediately)
+/// - Secures sensitive biometric credentials with encryption
+/// - Separates storage concerns from business logic
+/// - Implements two-tier storage strategy (fast cache + secure vault)
+/// - Enables testing with mock storage implementations
+///
+/// **Architecture:**
+/// ```
+/// AuthRepository
+///       ↓
+/// AuthLocalDataSource ← YOU ARE HERE
+///       ↓
+/// ├─ SharedPreferences (fast, unencrypted cache)
+/// │    ├─ cached_user (JSON string)
+/// │    ├─ user_role (string)
+/// │    ├─ biometric_enabled (boolean)
+/// │    ├─ first_launch (boolean)
+/// │    └─ last_login_time (timestamp)
+/// └─ FlutterSecureStorage (encrypted vault)
+///      └─ biometric_credentials (encrypted string)
+/// ```
+///
+/// **Storage Strategy:**
+/// ```
+/// Non-Sensitive Data → SharedPreferences
+/// ├─ User profile (cached_user)
+/// ├─ User role (quick access)
+/// ├─ Preferences (biometric_enabled, first_launch)
+/// └─ Metadata (last_login_time)
+///
+/// Sensitive Data → FlutterSecureStorage
+/// └─ Biometric credentials (email:password)
+///      ├─ iOS: Keychain with encryption
+///      └─ Android: EncryptedSharedPreferences
+/// ```
+///
+/// **Platform Security:**
+/// ```
+/// iOS:
+/// - FlutterSecureStorage → Keychain Services
+/// - Accessibility: first_unlock_this_device
+/// - Account: CourierAppAuth
+/// - Protected by device passcode/biometrics
+///
+/// Android:
+/// - FlutterSecureStorage → EncryptedSharedPreferences
+/// - AES-256 encryption
+/// - resetOnError: true (handles encryption key rotation)
+/// ```
+///
+/// **Data Flow:**
+/// ```
+/// Login Success
+///       ↓
+/// cacheUser(userModel)
+///       ↓
+/// ├─ Serialize to JSON
+/// ├─ Store in SharedPreferences
+/// └─ Store role separately
+///
+/// App Launch
+///       ↓
+/// getCachedUser()
+///       ↓
+/// ├─ Read from SharedPreferences
+/// ├─ Deserialize JSON
+/// └─ Return UserModel (or null)
+/// ```
+///
+/// **Usage Example:**
+/// ```dart
+/// final localDataSource = AuthLocalDataSourceImpl(
+///   secureStorage: FlutterSecureStorage(),
+///   preferences: await SharedPreferences.getInstance(),
+/// );
+///
+/// // Cache user after login
+/// final user = UserModel(...);
+/// await localDataSource.cacheUser(user);
+///
+/// // Quick role check (no JSON parsing)
+/// final role = await localDataSource.getUserRole();
+/// if (role == 'driver') {
+///   showDriverUI();
+/// }
+///
+/// // Get cached user
+/// final cachedUser = await localDataSource.getCachedUser();
+///
+/// // Enable biometric login
+/// await localDataSource.enableBiometric('user@example.com:password123');
+///
+/// // Check if first launch
+/// if (await localDataSource.isFirstLaunch()) {
+///   showOnboarding();
+///   await localDataSource.setFirstLaunch(false);
+/// }
+/// ```
+///
+/// **Biometric Credentials Storage:**
+/// - Format: "email:password" (colon-separated)
+/// - Encrypted by platform (Keychain/EncryptedSharedPreferences)
+/// - Only accessible after biometric authentication
+/// - Deleted when biometric is disabled
+///
+/// **IMPROVEMENTS:**
+/// - [High Priority] Change biometric credentials format to JSON
+///   - Current "email:password" format is fragile (what if password contains ':')
+///   - Use JSON: {"email": "...", "password": "..."}
+/// - [High Priority] Return Either<Failure, T> instead of throwing exceptions
+///   - Current exception handling forces try-catch everywhere
+/// - [Medium Priority] Add data encryption for cached_user in SharedPreferences
+///   - Currently unencrypted (less sensitive but still user data)
+/// - [Medium Priority] Implement cache TTL (time-to-live)
+///   - Automatically expire cached user after N days
+/// - [Low Priority] Add storage size monitoring
+///   - Alert if storage quota exceeded
+/// - [Low Priority] Implement cache versioning for migration
+///   - Handle schema changes in cached data
 @LazySingleton(as: AuthLocalDataSource)
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   final FlutterSecureStorage _secureStorage;

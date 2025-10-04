@@ -5,7 +5,11 @@ import 'package:delivery_app/shared/models/user_model.dart';
 import 'package:dio/dio.dart';
 import 'package:injectable/injectable.dart';
 
-/// Abstract interface for authentication remote data operations
+/// [AuthRemoteDataSource] - Abstract interface for authentication remote data operations
+///
+/// **Contract Definition:**
+/// Defines operations for interacting with authentication backend APIs.
+/// Implementations handle HTTP communication and error transformation.
 abstract class AuthRemoteDataSource {
   /// Authenticates a user with email and password
   Future<UserModel> login({
@@ -55,7 +59,143 @@ abstract class AuthRemoteDataSource {
   Future<String> getCsrfToken();
 }
 
-/// Implementation of authentication remote data source
+/// [AuthRemoteDataSourceImpl] - Backend API client for authentication operations
+///
+/// **What it does:**
+/// - Handles all authentication-related HTTP requests to backend
+/// - Transforms backend responses into domain models (UserModel)
+/// - Converts HTTP/network errors to domain exceptions
+/// - Manages CSRF token retrieval for write operations
+/// - Handles token-based authentication headers
+/// - Provides automatic login after registration
+///
+/// **Why it exists:**
+/// - Isolates HTTP communication from business logic
+/// - Centralizes API endpoint definitions
+/// - Standardizes error handling across auth operations
+/// - Enables easy mocking for testing
+/// - Separates data layer concerns from domain layer
+/// - Provides clean abstraction over Dio HTTP client
+///
+/// **Architecture:**
+/// ```
+/// AuthRepository
+///       ↓
+/// AuthRemoteDataSource ← YOU ARE HERE
+///       ↓
+/// ApiClient (Dio wrapper)
+///       ↓
+/// Backend REST API
+/// ```
+///
+/// **API Endpoints:**
+/// ```
+/// POST   /users/auth              - Login with email/password
+/// POST   /users                   - Register new user
+/// GET    /users/me                - Get current user profile
+/// POST   /users/refresh           - Refresh access token
+/// PATCH  /users/me                - Update user profile
+/// POST   /auth/password/reset     - Send password reset email
+/// POST   /auth/email/verify       - Verify email with code
+/// POST   /auth/password/change    - Change password
+/// POST   /auth/logout             - Logout (revoke tokens)
+/// GET    /auth/csrf               - Get CSRF token
+/// ```
+///
+/// **Authentication Flow:**
+/// ```
+/// login(email, password)
+///       ↓
+/// POST /users/auth
+///   ├─ Request: { email, password }
+///   └─ Headers: Content-Type: application/json
+///       ↓
+/// Backend validates credentials
+///       ↓
+/// Response: {
+///   data: {
+///     user_id, email, name, role, token
+///   }
+/// }
+///       ↓
+/// Parse name → firstName, lastName
+///       ↓
+/// Create UserModel with tokens
+///       ↓
+/// Return to repository
+/// ```
+///
+/// **Error Handling Strategy:**
+/// ```
+/// Dio Request
+///       ↓
+/// DioException thrown?
+///   ↙             ↘
+///  YES            NO
+///   ↓              ↓
+/// Check status   Parse response
+///   ↓              ↓
+/// 401 → AuthenticationException
+/// 409 → ServerException (duplicate)
+/// 400 → ValidationException
+/// Timeout → ServerException
+/// No connection → NetworkException
+///   ↓
+/// Throw domain exception
+/// ```
+///
+/// **Response Parsing:**
+/// - Backend returns nested data under 'data' key
+/// - Name field split into firstName/lastName
+/// - Missing phone number filled with placeholder (TODO: fix backend)
+/// - Timestamps created for created_at/updated_at if missing
+///
+/// **Usage Example:**
+/// ```dart
+/// final remoteDataSource = AuthRemoteDataSourceImpl(
+///   apiClient: ApiClient(),
+/// );
+///
+/// try {
+///   // Login
+///   final user = await remoteDataSource.login(
+///     email: 'user@example.com',
+///     password: 'password123',
+///   );
+///   print('Logged in: ${user.email}');
+///
+///   // Get current user
+///   final currentUser = await remoteDataSource.getCurrentUser();
+///
+///   // Update profile with CSRF protection
+///   final updatedUser = await remoteDataSource.updateProfile(
+///     firstName: 'John',
+///     lastName: 'Doe',
+///   );
+/// } on ServerException catch (e) {
+///   print('Server error: ${e.message}');
+/// } on NetworkException catch (e) {
+///   print('Network error: ${e.message}');
+/// }
+/// ```
+///
+/// **IMPROVEMENTS:**
+/// - [High Priority] Backend should return phone number in login response
+///   - Currently using placeholder '+2340000000000'
+/// - [High Priority] Backend should return refresh_token in login response
+///   - Currently using empty string placeholder
+/// - [High Priority] Backend should return csrf_token in login response
+///   - Currently using empty string placeholder
+/// - [Medium Priority] Add request/response logging interceptor
+///   - Helpful for debugging API issues
+/// - [Medium Priority] Add retry logic for transient network failures
+///   - Currently fails immediately on network error
+/// - [Medium Priority] Extract endpoint URLs to constants file
+///   - Enables environment-specific URLs (dev, staging, prod)
+/// - [Low Priority] Add request timeout configuration per endpoint
+///   - Some operations (like registration) may need longer timeout
+/// - [Low Priority] Add response validation (schema checking)
+///   - Detect when backend changes response structure
 @LazySingleton(as: AuthRemoteDataSource)
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient _apiClient;
@@ -75,6 +215,49 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl({required ApiClient apiClient})
       : _apiClient = apiClient;
 
+  /// Authenticates user with email and password via backend API
+  ///
+  /// **What it does:**
+  /// 1. Sends POST request to /users/auth with credentials
+  /// 2. Validates response status (200 = success)
+  /// 3. Extracts user data from nested 'data' object
+  /// 4. Parses full name into firstName and lastName
+  /// 5. Creates UserModel with access token
+  /// 6. Returns authenticated user model
+  ///
+  /// **Backend Response Format:**
+  /// ```json
+  /// {
+  ///   "data": {
+  ///     "user_id": "123",
+  ///     "email": "user@example.com",
+  ///     "name": "John Doe",
+  ///     "role": "customer",
+  ///     "token": "eyJhbGc..."
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// **Name Parsing Logic:**
+  /// - "John Doe" → firstName: "John", lastName: "Doe"
+  /// - "John" → firstName: "John", lastName: ""
+  /// - "John Middle Doe" → firstName: "John", lastName: "Middle Doe"
+  ///
+  /// **Throws:**
+  /// - ServerException: Invalid credentials (401), server error, or unexpected response
+  /// - NetworkException: Connection timeout or no internet
+  ///
+  /// **Edge Cases:**
+  /// - 401 Unauthorized → "Invalid credentials" message
+  /// - Connection timeout → "Connection timeout" message
+  /// - No internet → "No internet connection" message
+  /// - Non-200 response → Uses backend message or generic error
+  ///
+  /// **IMPROVEMENT:**
+  /// - [High Priority] Backend should return structured firstName/lastName
+  ///   - Current name parsing is fragile
+  /// - [Medium Priority] Add input validation before API call
+  ///   - Check email format, password length
   @override
   Future<UserModel> login({
     required String email,
@@ -155,6 +338,52 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// Registers new user and automatically logs them in
+  ///
+  /// **What it does:**
+  /// 1. Sends POST request to /users with registration data
+  /// 2. Validates response status (201 = created)
+  /// 3. Automatically calls login() to get access token
+  /// 4. Returns fully authenticated UserModel
+  ///
+  /// **Why auto-login:**
+  /// - Backend registration doesn't return tokens
+  /// - User expects to be logged in after registration
+  /// - Prevents extra manual login step
+  ///
+  /// **Flow Diagram:**
+  /// ```
+  /// register()
+  ///       ↓
+  /// POST /users
+  ///   ├─ first_name
+  ///   ├─ last_name
+  ///   ├─ email
+  ///   ├─ phone
+  ///   ├─ password
+  ///   └─ role
+  ///       ↓
+  /// 201 Created
+  ///       ↓
+  /// Automatically login(email, password)
+  ///       ↓
+  /// Return UserModel with tokens
+  /// ```
+  ///
+  /// **Throws:**
+  /// - ServerException: Email/phone already exists (409), validation failed (400)
+  /// - NetworkException: Connection error
+  ///
+  /// **Edge Cases:**
+  /// - 409 Conflict + "email" in message → "Email already exists"
+  /// - 409 Conflict + "phone" in message → "Phone already exists"
+  /// - 400 Bad Request → Validation error message
+  /// - Auto-login fails → Throws login error
+  ///
+  /// **IMPROVEMENT:**
+  /// - [Medium Priority] Return specific field validation errors
+  ///   - Backend should specify which field failed
+  /// - [Low Priority] Skip auto-login if email verification required
   @override
   Future<UserModel> register({
     required String firstName,
@@ -469,6 +698,40 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     }
   }
 
+  /// Fetches ephemeral CSRF token from backend
+  ///
+  /// **What it does:**
+  /// 1. Sends GET request to /auth/csrf
+  /// 2. Extracts csrf_token from response
+  /// 3. Returns token string for use in write operations
+  ///
+  /// **Why CSRF tokens:**
+  /// - Protects against Cross-Site Request Forgery attacks
+  /// - Required for state-changing operations (POST, PATCH, DELETE)
+  /// - Validates request originated from our app
+  ///
+  /// **Usage in Write Operations:**
+  /// - changePassword() includes in X-CSRF-Token header
+  /// - updateProfile() includes in X-CSRF-Token header
+  /// - Other write operations should include it
+  ///
+  /// **Throws:**
+  /// - ServerException: 401 unauthorized, server error, or missing token in response
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final csrfToken = await getCsrfToken();
+  /// final response = await apiClient.post(
+  ///   '/some/endpoint',
+  ///   options: Options(headers: {'X-CSRF-Token': csrfToken}),
+  /// );
+  /// ```
+  ///
+  /// **IMPROVEMENT:**
+  /// - [Medium Priority] Cache CSRF token with short TTL
+  ///   - Reduce API calls for multiple operations
+  /// - [Low Priority] Handle CSRF token rotation
+  ///   - Backend may invalidate and require new token
   @override
   Future<String> getCsrfToken() async {
     try {
