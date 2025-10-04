@@ -236,7 +236,7 @@ void main() {
       when(mockLocalDataSource.storeToken(any))
           .thenAnswer((_) async => null);
 
-      when(mockApiClient.setAuthToken(any))
+      when(mockApiClient.setAuthToken(any, refreshToken: anyNamed('refreshToken')))
           .thenReturn(null);
 
       // Act
@@ -359,7 +359,7 @@ void main() {
       when(mockLocalDataSource.storeToken(any))
           .thenAnswer((_) async => null);
 
-      when(mockApiClient.setAuthToken(any))
+      when(mockApiClient.setAuthToken(any, refreshToken: anyNamed('refreshToken')))
           .thenReturn(null);
 
       // Act
