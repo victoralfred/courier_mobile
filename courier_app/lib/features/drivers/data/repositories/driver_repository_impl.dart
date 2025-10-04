@@ -10,24 +10,331 @@ import 'package:delivery_app/features/drivers/domain/repositories/driver_reposit
 import 'package:delivery_app/features/drivers/domain/value_objects/availability_status.dart';
 import 'package:delivery_app/features/drivers/domain/value_objects/driver_status.dart';
 
-/// Implementation of [DriverRepository] with offline-first pattern
+/// [DriverRepositoryImpl] - Complete driver repository implementation with offline-first architecture
 ///
-/// This repository follows the offline-first approach:
-/// 1. Always check local database first
-/// 2. Return cached data immediately if available
-/// 3. Queue write operations when offline
-/// 4. Sync with backend when online
+/// **What it does:**
+/// - Implements DriverRepository interface with real data sources
+/// - Orchestrates offline-first driver data management
+/// - Handles local database operations (SQLite/Drift)
+/// - Manages backend API synchronization
+/// - Queues write operations for offline sync
+/// - Provides real-time driver updates via streams
+/// - Converts between domain entities and database models
+/// - Handles driver CRUD operations with sync queue
+///
+/// **Why it exists:**
+/// - Implements domain repository contract with actual platform code
+/// - Bridges domain layer (use cases) and data layer (database/API)
+/// - Enables offline capability for driver management
+/// - Centralizes driver data orchestration logic
+/// - Provides clean error handling via Either<Failure, T>
+/// - Enables testability through dependency injection
+/// - Separates concerns: domain doesn't know about database/network
+///
+/// **Architecture (Offline-First Repository Pattern):**
+/// ```
+/// Presentation Layer (BLoC/Cubit)
+///          ↓
+/// Domain Layer (Use Cases)
+///          ↓
+/// Domain Repository Interface
+///          ↓
+/// Data Repository Implementation ← YOU ARE HERE
+///          ↓
+/// ├─ AppDatabase (Drift/SQLite)
+/// │  ├─ DriverDao (CRUD queries)
+/// │  └─ SyncQueueDao (offline sync)
+/// │
+/// └─ ApiClient (HTTP/REST)
+///    └─ Backend API endpoints
+/// ```
+///
+/// **Offline-First Strategy:**
+/// ```
+/// READ Operations (getDriverById, getDriverByUserId):
+///   1. Query local database FIRST (instant response)
+///   2. Return cached driver immediately
+///   3. No network call (use fetchDriverFromBackend for sync)
+///   4. Works completely offline
+///
+/// WRITE Operations (upsertDriver, updateAvailability, updateLocation):
+///   1. Save to local database immediately
+///   2. Add operation to sync queue
+///   3. Return success (optimistic update)
+///   4. Background worker syncs when online
+///
+/// SYNC Operations (fetchDriverFromBackend):
+///   1. Fetch from backend API
+///   2. Delete existing local records (prevent duplicates)
+///   3. Save fresh data to local database
+///   4. Return updated driver
+///
+/// REAL-TIME Operations (watchDriverById, watchDriverByUserId):
+///   1. Watch local database (reactive stream)
+///   2. Emit new data when local changes occur
+///   3. Backend sync updates local DB → stream emits
+/// ```
+///
+/// **Data Flow (Driver Onboarding - Create New Driver):**
+/// ```
+/// upsertDriver(newDriver)
+///       ↓
+/// Check if driver exists in local DB
+///   ↙                          ↘
+/// NOT FOUND                 FOUND
+///   ↓                          ↓
+/// Save to local DB         Save to local DB
+///   ↓                          ↓
+/// Add to sync queue:       Add to sync queue:
+/// operation='create'       operation='update'
+/// endpoint='POST /drivers' endpoint='PUT /drivers/:id'
+///   ↓                          ↓
+/// Return Right(driver)     Return Right(driver)
+///       ↓
+/// Background worker syncs when online:
+///   ↓
+/// POST /drivers/register {...driverJson}
+///   ↓
+/// Backend creates driver → returns ID
+///   ↓
+/// Update local DB with backend ID
+///   ↓
+/// Mark sync queue item as completed
+/// ```
+///
+/// **Data Flow (Location Update - Real-time Tracking):**
+/// ```
+/// updateLocation(driverId, gpsCoords)
+///       ↓
+/// Update local DB (driverDao.updateLocation)
+///       ↓
+/// Add to sync queue:
+/// operation='update_location'
+/// endpoint='PUT /drivers/:id/location'
+/// payload={latitude, longitude, timestamp}
+///       ↓
+/// Get updated driver from local DB
+///       ↓
+/// Return Right(driver)
+///       ↓
+/// watchDriverById stream emits new location
+///       ↓
+/// Background worker syncs:
+///   ↓
+/// PUT /drivers/:id/location
+///   ↓
+/// Backend updates driver location
+///   ↓
+/// WebSocket notifies admin dashboard
+///   ↓
+/// Mark sync queue item as completed
+/// ```
+///
+/// **Data Flow (Fetch from Backend - Sync Remote Data):**
+/// ```
+/// fetchDriverFromBackend(userId)
+///       ↓
+/// Check ApiClient availability
+///       ↓
+/// GET /drivers/:userId (with auth token)
+///       ↓
+/// Receive response
+///   ↙           ↘
+/// 200 OK       404/500
+///   ↓             ↓
+/// Extract data  Return Left(Failure)
+///   ↓
+/// Map backend JSON → Driver entity
+///   ↓
+/// Delete existing driver records (prevent duplicates)
+///   ↓
+/// Save fresh driver to local DB
+///   ↓
+/// Return Right(driver)
+/// ```
+///
+/// **Sync Queue Payloads:**
+/// ```
+/// CREATE (driver onboarding):
+/// {
+///   "endpoint": "POST /drivers/register",
+///   "data": {
+///     "user_id": "usr_123",
+///     "first_name": "Amaka",
+///     "last_name": "Nwosu",
+///     "email": "amaka@example.com",
+///     "phone_number": "+2348098765432",
+///     "license_number": "LAG-67890-XY",
+///     "vehicle": {
+///       "plate": "ABC-123-XY",
+///       "type": "motorcycle",
+///       "make": "Honda",
+///       "model": "CB500X",
+///       "year": 2023,
+///       "color": "Red"
+///     }
+///   }
+/// }
+///
+/// UPDATE AVAILABILITY:
+/// {
+///   "endpoint": "PUT /drivers/:id/availability",
+///   "data": {
+///     "availability": "available"
+///   }
+/// }
+///
+/// UPDATE LOCATION:
+/// {
+///   "endpoint": "PUT /drivers/:id/location",
+///   "data": {
+///     "latitude": 6.5244,
+///     "longitude": 3.3792,
+///     "timestamp": "2025-10-04T14:30:00Z"
+///   }
+/// }
+///
+/// DELETE:
+/// {
+///   "endpoint": "DELETE /drivers/:id",
+///   "data": null
+/// }
+/// ```
+///
+/// **Error Handling Pattern:**
+/// - Uses Either<Failure, T> from dartz package
+/// - Left(CacheFailure): Database errors
+/// - Left(NetworkFailure): API errors
+/// - Right(T): Success value (Driver, List<Driver>, bool)
+/// - No exceptions thrown (all errors as Failure types)
+///
+/// **Usage Example:**
+/// ```dart
+/// // Create driver (offline-capable)
+/// final newDriver = Driver(
+///   id: uuid.v4(),
+///   userId: currentUser.id,
+///   firstName: 'Amaka',
+///   lastName: 'Nwosu',
+///   email: 'amaka@example.com',
+///   phone: '+2348098765432',
+///   licenseNumber: 'LAG-67890-XY',
+///   vehicleInfo: vehicleInfo,
+///   status: DriverStatus.pending,
+///   availability: AvailabilityStatus.offline,
+///   rating: 0.0,
+///   totalRatings: 0,
+/// );
+///
+/// final result = await repository.upsertDriver(newDriver);
+/// result.fold(
+///   (failure) => showError(failure.message),
+///   (driver) => navigateToPendingApproval(driver),
+/// );
+///
+/// // Sync from backend (online)
+/// final syncResult = await repository.fetchDriverFromBackend(userId);
+/// syncResult.fold(
+///   (failure) => print('Sync failed: ${failure.message}'),
+///   (driver) => print('Synced: ${driver.fullName}'),
+/// );
+///
+/// // Real-time location updates
+/// Timer.periodic(Duration(seconds: 15), (_) async {
+///   final location = await gpsService.getCurrentLocation();
+///   await repository.updateLocation(
+///     driverId: driver.id,
+///     location: location,
+///   );
+/// });
+///
+/// // Watch for updates
+/// repository.watchDriverByUserId(userId).listen((driver) {
+///   if (driver != null) {
+///     emit(DriverUpdated(driver));
+///   }
+/// });
+/// ```
+///
+/// **Dependency Injection:**
+/// - @LazySingleton: Single instance created on first use
+/// - Injectable: Auto-registered with get_it service locator
+/// - Constructor injection: All dependencies provided externally
+///
+/// **IMPROVEMENTS:**
+/// - [High Priority] Extract backend sync logic to separate SyncService
+/// - Currently mixing repository logic with sync queue management
+/// - [High Priority] Add retry logic for failed sync operations
+/// - Exponential backoff for network errors
+/// - [Medium Priority] Add conflict resolution for concurrent updates
+/// - Last-write-wins vs merge strategies
+/// - [Medium Priority] Add batch sync operations
+/// - Sync multiple drivers in single API call
+/// - [Low Priority] Add driver data versioning
+/// - Detect when server driver model has changed
+/// - [Low Priority] Add sync progress callbacks
+/// - Notify UI about sync status
 class DriverRepositoryImpl implements DriverRepository {
   final AppDatabase _database;
   final dynamic
       _apiClient; // ApiClient - using dynamic to avoid circular dependency
 
+  /// Creates DriverRepositoryImpl with required dependencies
+  ///
+  /// **Parameters:**
+  /// - [database]: Drift database instance for local storage (required)
+  /// - [apiClient]: HTTP client for backend API calls (optional, uses dynamic to avoid circular dependency)
+  ///
+  /// **Initialization:**
+  /// - Stores database reference for data persistence
+  /// - Stores API client for backend synchronization
+  /// - No upfront data loading (lazy loading pattern)
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final repository = DriverRepositoryImpl(
+  ///   database: GetIt.I<AppDatabase>(),
+  ///   apiClient: GetIt.I<ApiClient>(),
+  /// );
+  /// ```
   DriverRepositoryImpl({
     required AppDatabase database,
     dynamic apiClient,
   })  : _database = database,
         _apiClient = apiClient;
 
+  /// Gets driver by ID from local database (offline-first)
+  ///
+  /// **What it does:**
+  /// - Queries local Drift database for driver record
+  /// - Maps database model to domain entity
+  /// - Returns cached driver (no network call)
+  /// - Fast lookup for driver profile display
+  ///
+  /// **Flow:**
+  /// ```
+  /// Query local DB (driverDao.getDriverById)
+  ///       ↓
+  /// Found? → Map to Driver entity → Return Right(driver)
+  /// Not found? → Return Left(CacheFailure)
+  /// Error? → Return Left(CacheFailure)
+  /// ```
+  ///
+  /// **Parameters:**
+  /// - [id]: Driver ID (not user ID)
+  ///
+  /// **Returns:**
+  /// - Right(Driver): Driver found in local database
+  /// - Left(CacheFailure): Driver not found or database error
+  ///
+  /// **Example:**
+  /// ```dart
+  /// final result = await repository.getDriverById('drv_123');
+  /// result.fold(
+  ///   (failure) => showError('Driver not found'),
+  ///   (driver) => displayDriverProfile(driver),
+  /// );
+  /// ```
   @override
   Future<Either<Failure, Driver>> getDriverById(String id) async {
     try {
@@ -66,6 +373,74 @@ class DriverRepositoryImpl implements DriverRepository {
     }
   }
 
+  /// Fetches driver from backend API and syncs to local database
+  ///
+  /// **What it does:**
+  /// - Fetches fresh driver data from backend REST API
+  /// - Deletes existing local driver records (prevents duplicates)
+  /// - Saves fresh data to local database
+  /// - Returns updated driver entity
+  ///
+  /// **When to use:**
+  /// - User login (sync remote driver profile)
+  /// - Pull-to-refresh driver profile
+  /// - Verify driver status after admin approval
+  /// - Periodic background sync
+  ///
+  /// **Flow:**
+  /// ```
+  /// Check ApiClient availability
+  ///       ↓
+  /// GET /drivers/{userId} (with auth token)
+  ///       ↓
+  /// Receive JSON response
+  ///   ↙           ↘
+  /// 200 OK       404/500
+  ///   ↓             ↓
+  /// Extract data  Return NetworkFailure
+  ///   ↓
+  /// Map backend JSON → Driver entity (DriverMapper.fromBackendJson)
+  ///   ↓
+  /// Delete existing driver records by userId (prevent duplicates)
+  ///       ↓
+  /// Save fresh driver to local DB (driverDao.upsertDriver)
+  ///       ↓
+  /// Return Right(driver)
+  /// ```
+  ///
+  /// **API Endpoint:**
+  /// - URL: GET /drivers/{userId}
+  /// - Auth: Required (Bearer token)
+  /// - Response: `{ "data": { "id": "...", "user_id": "...", "first_name": "...", ... } }`
+  ///
+  /// **Parameters:**
+  /// - [userId]: User account ID (from authentication)
+  ///
+  /// **Returns:**
+  /// - Right(Driver): Driver fetched and synced successfully
+  /// - Left(NetworkFailure): API client unavailable, network error, or HTTP error
+  /// - Left(CacheFailure): Database save error
+  ///
+  /// **Edge Cases:**
+  /// - ApiClient is null → NetworkFailure
+  /// - 404 response → NetworkFailure (driver not found on backend)
+  /// - Network timeout → NetworkFailure
+  /// - Database save fails → CacheFailure
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // Sync driver on app startup
+  /// final result = await repository.fetchDriverFromBackend(userId);
+  /// result.fold(
+  ///   (failure) {
+  ///     if (failure is NetworkFailure) {
+  ///       print('Network error: ${failure.message}');
+  ///       // Continue with cached data
+  ///     }
+  ///   },
+  ///   (driver) => print('Synced: ${driver.fullName}, Status: ${driver.status.name}'),
+  /// );
+  /// ```
   @override
   Future<Either<Failure, Driver>> fetchDriverFromBackend(String userId) async {
     try {
@@ -114,6 +489,117 @@ class DriverRepositoryImpl implements DriverRepository {
     }
   }
 
+  /// Creates or updates driver profile with offline-first sync
+  ///
+  /// **What it does:**
+  /// - Creates new driver if doesn't exist
+  /// - Updates existing driver if already exists
+  /// - Saves to local database immediately (optimistic update)
+  /// - Queues operation for backend sync when online
+  /// - Returns driver entity
+  ///
+  /// **When to use:**
+  /// - Driver onboarding (create new driver profile)
+  /// - Driver profile update (edit vehicle info, contact details)
+  /// - Offline driver creation (sync later when online)
+  ///
+  /// **Flow:**
+  /// ```
+  /// Convert Driver entity → DriverTableData (DriverMapper.toDatabase)
+  ///       ↓
+  /// Check if driver exists in local DB
+  ///   ↙                          ↘
+  /// NOT FOUND                 FOUND
+  /// (New driver)            (Update driver)
+  ///   ↓                          ↓
+  /// Save to local DB         Save to local DB
+  ///   ↓                          ↓
+  /// Add to sync queue:       Add to sync queue:
+  /// operation='create'       operation='update'
+  /// endpoint='POST /drivers/register'  endpoint='PUT /drivers/{id}'
+  /// payload=registrationJson   payload=updateJson
+  ///   ↓                          ↓
+  /// Return Right(driver)     Return Right(driver)
+  ///       ↓
+  /// Background worker syncs when online
+  /// ```
+  ///
+  /// **Sync Queue Payloads:**
+  /// ```
+  /// CREATE (new driver onboarding):
+  /// {
+  ///   "endpoint": "POST /drivers/register",
+  ///   "data": {
+  ///     "user_id": "usr_123",
+  ///     "first_name": "Amaka",
+  ///     "last_name": "Nwosu",
+  ///     "email": "amaka@example.com",
+  ///     "phone_number": "+2348098765432",
+  ///     "license_number": "LAG-67890-XY",
+  ///     "vehicle": {
+  ///       "plate": "ABC-123-XY",
+  ///       "type": "motorcycle",
+  ///       "make": "Honda",
+  ///       "model": "CB500X",
+  ///       "year": 2023,
+  ///       "color": "Red"
+  ///     }
+  ///   }
+  /// }
+  ///
+  /// UPDATE (existing driver):
+  /// {
+  ///   "endpoint": "PUT /drivers/{driverId}",
+  ///   "data": {
+  ///     "first_name": "Amaka",
+  ///     "vehicle": { ... }
+  ///   }
+  /// }
+  /// ```
+  ///
+  /// **Parameters:**
+  /// - [driver]: Driver entity to create/update
+  ///
+  /// **Returns:**
+  /// - Right(Driver): Driver created/updated successfully in local DB
+  /// - Left(CacheFailure): Database save error
+  ///
+  /// **Edge Cases:**
+  /// - Offline creation → Saved locally, syncs when online
+  /// - Duplicate driver ID → Updates existing record
+  /// - Sync fails → Retried by background worker
+  ///
+  /// **Example:**
+  /// ```dart
+  /// // Create new driver (offline-capable)
+  /// final newDriver = Driver(
+  ///   id: uuid.v4(),
+  ///   userId: currentUser.id,
+  ///   firstName: 'Amaka',
+  ///   lastName: 'Nwosu',
+  ///   email: 'amaka@example.com',
+  ///   phone: '+2348098765432',
+  ///   licenseNumber: 'LAG-67890-XY',
+  ///   vehicleInfo: VehicleInfo(
+  ///     plate: 'ABC-123-XY',
+  ///     type: VehicleType.motorcycle,
+  ///     make: 'Honda',
+  ///     model: 'CB500X',
+  ///     year: 2023,
+  ///     color: 'Red',
+  ///   ),
+  ///   status: DriverStatus.pending,
+  ///   availability: AvailabilityStatus.offline,
+  ///   rating: 0.0,
+  ///   totalRatings: 0,
+  /// );
+  ///
+  /// final result = await repository.upsertDriver(newDriver);
+  /// result.fold(
+  ///   (failure) => showError(failure.message),
+  ///   (driver) => navigateToPendingApproval(driver),
+  /// );
+  /// ```
   @override
   Future<Either<Failure, Driver>> upsertDriver(Driver driver) async {
     try {
