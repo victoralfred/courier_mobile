@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../domain/entities/jwt_token.dart';
 import '../../domain/services/token_manager.dart';
 import '../datasources/token_local_data_source.dart';
@@ -113,6 +114,9 @@ import '../datasources/token_local_data_source.dart';
 /// - [Low Priority] Add token validation before refresh (check format, signature)
 /// - Currently trusts local storage token validity
 class TokenManagerImpl implements TokenManager {
+  /// Logger instance for token management operations
+  static final _logger = AppLogger.auth();
+
   /// Local data source for token persistence
   ///
   /// **Why:**
@@ -782,7 +786,9 @@ class TokenManagerImpl implements TokenManager {
   void unawaited(Future<void> future) {
     future.catchError((error) {
       // Log error but don't throw
-      print('Background refresh error: $error');
+      _logger.error('Background token refresh failed', error: error, metadata: {
+        'context': 'unawaited_future',
+      });
     });
   }
 }

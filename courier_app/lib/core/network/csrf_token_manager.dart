@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:delivery_app/core/constants/app_strings.dart';
 import 'package:delivery_app/core/error/exceptions.dart';
+import 'package:delivery_app/core/services/app_logger.dart';
 
 /// [CsrfTokenManager] - Manages Cross-Site Request Forgery (CSRF) tokens for write operations
 ///
@@ -73,6 +74,9 @@ class CsrfTokenManager {
   /// - Prevents typos and ensures consistency
   static const String _csrfEndpoint = '/auth/csrf';
 
+  /// Logger instance for CSRF operations
+  static final _logger = AppLogger.network();
+
   /// Creates CSRF token manager
   ///
   /// **Parameters:**
@@ -134,7 +138,6 @@ class CsrfTokenManager {
   /// ```
   ///
   /// **IMPROVEMENT:**
-  /// - [High Priority] Remove debug print statements (use logging service)
   /// - [Medium Priority] Add retry logic (currently fails on first error)
   /// - [Low Priority] Cache token for 5-10 minutes to reduce API calls
   Future<String> getToken() async {
@@ -142,20 +145,20 @@ class CsrfTokenManager {
     try {
       // Add auth token if available
       final authToken = getAuthToken?.call();
-      print('=== CSRF TOKEN MANAGER DEBUG ===');
-      print('Fetching new CSRF token from: $_csrfEndpoint');
-      print('Base URL: ${dio.options.baseUrl}');
-      print('Full URL: ${dio.options.baseUrl}$_csrfEndpoint');
-      print('Auth token available: ${authToken != null ? "YES (${authToken.substring(0, 20)}...)" : "NO"}');
+
+      _logger.debug('Fetching CSRF token', metadata: {
+        'endpoint': _csrfEndpoint,
+        'baseUrl': dio.options.baseUrl,
+        'hasAuthToken': authToken != null && authToken.isNotEmpty,
+      });
 
       final options = Options();
       if (authToken != null && authToken.isNotEmpty) {
         options.headers = {'Authorization': 'Bearer $authToken'};
-        print('Added Authorization header to CSRF request');
+        _logger.debug('Added Authorization header to CSRF request');
       } else {
-        print('⚠️  No auth token available for CSRF request!');
+        _logger.warning('No auth token available for CSRF request');
       }
-      print('================================');
 
       final response = await dio.get(_csrfEndpoint, options: options);
 
@@ -172,7 +175,7 @@ class CsrfTokenManager {
 
       // Extract and return token (no caching - CSRF tokens are ephemeral)
       final token = data['data']['csrf_token'] as String;
-      print('✅ Fresh CSRF token fetched');
+      _logger.info('CSRF token fetched successfully');
 
       return token;
     } on ServerException {

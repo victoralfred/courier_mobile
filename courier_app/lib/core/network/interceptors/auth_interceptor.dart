@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:delivery_app/core/services/app_logger.dart';
 
 /// [AuthInterceptor] - Dio interceptor that automatically injects authentication and CSRF tokens into requests
 ///
@@ -56,12 +57,14 @@ import 'package:dio/dio.dart';
 /// ```
 ///
 /// **IMPROVEMENT:**
-/// - [High Priority] Remove debug print statements (use logging service)
 /// - [Medium Priority] Add token expiry check before injection (prevent sending expired tokens)
 /// - [Medium Priority] Support multiple auth schemes (Bearer, Basic, API Key)
 /// - [Low Priority] Add metrics for auth header injection success/failure
 /// - [Low Priority] Support conditional auth (some endpoints don't need auth)
 class AuthInterceptor extends Interceptor {
+  /// Logger instance for auth interceptor operations
+  static final _logger = AppLogger.auth();
+
   /// Function to retrieve current JWT access token
   ///
   /// **Why function instead of direct token:**
@@ -137,41 +140,40 @@ class AuthInterceptor extends Interceptor {
   /// - Logs warnings in debug mode when tokens are missing
   ///
   /// **IMPROVEMENT:**
-  /// - [High Priority] Remove print statements (use logging service)
   /// - [Medium Priority] Add retry logic when token is expired
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Debug logging
-    print('=== AUTH INTERCEPTOR DEBUG ===');
-    print('Request: ${options.method} ${options.path}');
+    _logger.debug('Auth: Processing request', metadata: {
+      'method': options.method,
+      'path': options.path,
+    });
 
     // Add Bearer token if available
     final authToken = getAuthToken();
-    print('Auth token from getAuthToken(): ${authToken != null ? "YES (${authToken.substring(0, 20)}...)" : "NO"}');
+    final hasAuthToken = authToken != null && authToken.isNotEmpty;
 
-    if (authToken != null && authToken.isNotEmpty) {
+    _logger.debug('Auth token status', metadata: {
+      'hasAuthToken': hasAuthToken,
+    });
+
+    if (hasAuthToken) {
       options.headers['Authorization'] = 'Bearer $authToken';
-      print('✅ Added Authorization header');
+      _logger.info('Authorization header added');
     } else {
-      print('⚠️  No auth token - request will likely fail if protected');
+      _logger.warning('No auth token - request will likely fail if protected');
     }
 
     // Add CSRF token for write operations (POST, PUT, DELETE, PATCH)
     final csrfToken = getCsrfToken();
-    print('CSRF token available: ${csrfToken != null ? "YES" : "NO"}');
-    print('Is write method: ${_isWriteMethod(options.method)}');
+    final hasCsrfToken = csrfToken != null && csrfToken.isNotEmpty;
+    final isWriteOp = _isWriteMethod(options.method);
 
-    if (csrfToken != null &&
-        csrfToken.isNotEmpty &&
-        _isWriteMethod(options.method)) {
+    if (hasCsrfToken && isWriteOp) {
       options.headers['X-CSRF-Token'] = csrfToken;
-      print('✅ Added CSRF token header');
-    } else if (_isWriteMethod(options.method)) {
-      print('⚠️  No CSRF token for write operation - may fail');
+      _logger.info('CSRF token header added');
+    } else if (isWriteOp) {
+      _logger.warning('No CSRF token for write operation - may fail');
     }
-
-    print('Final headers: ${options.headers}');
-    print('==============================');
 
     handler.next(options);
   }

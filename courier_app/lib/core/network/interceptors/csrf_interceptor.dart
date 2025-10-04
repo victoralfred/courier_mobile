@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:delivery_app/core/network/csrf_token_manager.dart';
+import 'package:delivery_app/core/services/app_logger.dart';
 
 /// [CsrfInterceptor] - Dio interceptor that automatically injects CSRF tokens into write requests
 ///
@@ -57,7 +58,6 @@ import 'package:delivery_app/core/network/csrf_token_manager.dart';
 /// ```
 ///
 /// **IMPROVEMENT:**
-/// - [High Priority] Remove debug print statements (use logging service)
 /// - [Medium Priority] Add configurable retry on CSRF fetch failure
 /// - [Medium Priority] Cache CSRF token for 5-10 minutes (reduce API calls)
 /// - [Low Priority] Add metrics for CSRF success/failure rates
@@ -65,6 +65,9 @@ import 'package:delivery_app/core/network/csrf_token_manager.dart';
 class CsrfInterceptor extends Interceptor {
   /// CSRF token manager that fetches tokens from backend
   final CsrfTokenManager csrfTokenManager;
+
+  /// Logger instance for CSRF interceptor operations
+  static final _logger = AppLogger.network();
 
   /// List of path patterns to exclude from CSRF protection
   ///
@@ -148,7 +151,6 @@ class CsrfInterceptor extends Interceptor {
   /// - If `useNullableGetter = false`: Throws exception, request fails
   ///
   /// **IMPROVEMENT:**
-  /// - [High Priority] Remove print statements, use proper logging
   /// - [Medium Priority] Add retry logic (currently fails on first error)
   @override
   Future<void> onRequest(
@@ -157,15 +159,19 @@ class CsrfInterceptor extends Interceptor {
   ) async {
     // Skip if path is excluded
     if (_isPathExcluded(options.path)) {
-      print('🔒 CSRF: Skipping excluded path: ${options.path}');
+      _logger.debug('CSRF: Skipping excluded path', metadata: {
+        'path': options.path,
+      });
       return handler.next(options);
     }
 
     // Only add CSRF token for write operations
     if (_isWriteMethod(options.method)) {
-      print('=== CSRF INTERCEPTOR DEBUG ===');
-      print('Request: ${options.method} ${options.path}');
-      print('Using nullable getter: $useNullableGetter');
+      _logger.debug('CSRF: Processing write request', metadata: {
+        'method': options.method,
+        'path': options.path,
+        'useNullableGetter': useNullableGetter,
+      });
 
       try {
         // Fetch CSRF token
@@ -176,16 +182,18 @@ class CsrfInterceptor extends Interceptor {
         // Add to headers if token is available
         if (token != null && token.isNotEmpty) {
           options.headers['X-CSRF-Token'] = token;
-          print('✅ Added CSRF token to headers');
+          _logger.info('CSRF token added to request headers');
         } else {
-          print('⚠️  No CSRF token available (token was null)');
+          _logger.warning('No CSRF token available (token was null)');
         }
       } catch (e) {
-        print('❌ Failed to get CSRF token: $e');
+        _logger.error('Failed to get CSRF token', error: e, metadata: {
+          'method': options.method,
+          'path': options.path,
+        });
         // Continue without CSRF token on error
         // The backend will reject the request if CSRF is required
       }
-      print('==============================');
     }
 
     handler.next(options);
