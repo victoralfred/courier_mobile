@@ -1,8 +1,93 @@
 part of '../app_database.dart';
 
-/// Data Access Object for Driver operations
+/// WHAT: Data Access Object (DAO) for Driver table operations
 ///
-/// Provides CRUD operations and queries for driver data
+/// WHY: Encapsulates all database operations for drivers, providing a clean API for
+/// driver onboarding, status management, location tracking, and availability updates.
+/// Critical for driver lifecycle management and real-time driver matching.
+///
+/// RESPONSIBILITIES:
+/// - Driver CRUD operations (get, upsert, delete)
+/// - Driver status management (pending, approved, rejected, suspended)
+/// - Real-time location tracking and availability updates
+/// - Driver rating and statistics management
+/// - Backend ID synchronization after driver registration
+/// - Real-time driver data streaming via watch methods
+///
+/// QUERY PATTERNS:
+/// - getDriverById(): Lookup by driver ID
+/// - getDriverByUserId(): Lookup by associated user (1:1 relationship)
+/// - getAvailableDrivers(): Find drivers ready for order assignment
+/// - updateLocation(): Track driver position for proximity matching
+/// - updateDriverIdAndStatus(): Sync local driver with backend-generated ID
+///
+/// USAGE:
+/// ```dart
+/// // Driver onboarding - create local driver profile
+/// final driver = DriverTableCompanion.insert(
+///   id: 'local-${uuid.v4()}',  // Local ID until backend sync
+///   userId: currentUser.id,
+///   firstName: 'John',
+///   lastName: 'Doe',
+///   email: 'john@example.com',
+///   phone: '+2348012345678',
+///   licenseNumber: 'ABC123456',
+///   vehiclePlate: 'LAG-123-AB',
+///   vehicleType: 'motorcycle',
+///   vehicleMake: 'Honda',
+///   vehicleModel: 'CB125',
+///   vehicleYear: 2020,
+///   vehicleColor: 'Red',
+///   status: 'pending',
+///   availability: 'offline',
+///   rating: 0.0,
+///   totalRatings: 0,
+/// );
+/// await database.driverDao.upsertDriver(driver);
+///
+/// // After backend sync - update with server ID
+/// await database.driverDao.updateDriverIdAndStatus(
+///   localId: 'local-abc123',
+///   backendId: 'server-xyz789',
+///   status: 'pending',
+/// );
+///
+/// // Driver goes online - update location and availability
+/// await database.driverDao.updateAvailability(driver.id, 'available');
+/// await database.driverDao.updateLocation(
+///   driverId: driver.id,
+///   latitude: 6.5244,
+///   longitude: 3.3792,
+/// );
+///
+/// // Driver goes offline - clear location
+/// await database.driverDao.updateAvailability(driver.id, 'offline');
+/// await database.driverDao.clearLocation(driver.id);
+///
+/// // Watch driver status for reactive UI
+/// database.driverDao.watchDriverByUserId(userId).listen((driver) {
+///   // Update UI when driver status changes
+/// });
+/// ```
+///
+/// LOCATION TRACKING:
+/// - Location only stored when driver is online (available/busy)
+/// - Nigeria geographic bounds: 4-14°N, 3-15°E
+/// - lastLocationUpdate tracks staleness (consider timeout for inactive drivers)
+///
+/// STATUS TRANSITIONS:
+/// - pending -> approved (admin approval)
+/// - pending -> rejected (failed verification)
+/// - approved -> suspended (policy violation)
+/// - suspended -> approved (suspension expired or lifted)
+///
+/// IMPROVEMENT OPPORTUNITIES:
+/// - [HIGH] Add getDriversNearLocation() for proximity-based matching
+/// - [MEDIUM] Add updateRatingWithNewReview() to atomically calculate average
+/// - [LOW] Add getDriverStatistics() for performance metrics
+/// - [MEDIUM] Add validation for Nigeria geographic bounds on location updates
+/// - [HIGH] Add stale location check (flag drivers with old lastLocationUpdate)
+/// - [LOW] Add getDriversByStatus() for admin dashboard filtering
 @DriftAccessor(tables: [DriverTable])
 class DriverDao extends DatabaseAccessor<AppDatabase> with _$DriverDaoMixin {
   DriverDao(super.db);
