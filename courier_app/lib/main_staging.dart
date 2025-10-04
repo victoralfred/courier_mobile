@@ -21,7 +21,7 @@ void main() async {
   final storedToken = await tokenDataSource.getToken();
   if (storedToken != null) {
     final apiClient = di.getIt<ApiClient>();
-    apiClient.setAuthToken(storedToken.token, refreshToken: storedToken.refreshToken);
+    apiClient.setAuthToken(storedToken);
   }
 
   // Start connectivity monitoring and sync service

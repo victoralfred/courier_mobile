@@ -22,7 +22,7 @@ void main() async {
   if (storedToken != null) {
     print('🔑 Token loaded: ${storedToken.token.substring(0, 20)}...');
     final apiClient = di.getIt<ApiClient>();
-    apiClient.setAuthToken(storedToken.token, refreshToken: storedToken.refreshToken);
+    apiClient.setAuthToken(storedToken);
     print('✅ Token set on ApiClient');
   } else {
     print('❌ No token found in storage');
