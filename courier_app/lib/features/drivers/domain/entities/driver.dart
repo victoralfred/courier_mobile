@@ -17,15 +17,20 @@ import 'package:delivery_app/features/drivers/domain/value_objects/vehicle_info.
 /// - Stores driver rating and performance metrics
 /// - Uses value objects for type safety (VehicleInfo, Coordinate)
 /// - Immutable entity with copyWith pattern
+/// - Enables driver-to-user relationship tracking via userId
+/// - Supports status change audit trail with timestamps
 ///
 /// **Why it exists:**
 /// - Central driver identity representation across the app
 /// - Enforces data integrity through validation
 /// - Separates domain logic from presentation/infrastructure
-/// - Enables driver verification workflow
-/// - Type-safe driver data (no invalid emails, ratings, etc.)
+/// - Enables driver verification workflow (onboarding, approval, rejection)
+/// - Type-safe driver data (no invalid emails, ratings, locations)
 /// - Clean Architecture domain layer entity
 /// - Supports real-time driver tracking and order assignment
+/// - Enables admin moderation and driver management
+/// - Tracks driver performance via ratings and metrics
+/// - Facilitates location-based order assignment
 ///
 /// **Entity Validation Rules:**
 /// - **First Name**: Non-empty, trimmed
@@ -96,13 +101,96 @@ import 'package:delivery_app/features/drivers/domain/value_objects/vehicle_info.
 /// );
 /// ```
 ///
-/// **Architecture Context:**
+/// **Clean Architecture Layers:**
 /// ```
-/// Domain Layer (Driver Entity) ← YOU ARE HERE
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Presentation Layer (UI + BLoC/State Management)             │
+/// │ - DriverProfileScreen, DriverListScreen                     │
+/// │ - DriverBloc, DriverCubit                                   │
+/// │ - Displays driver info, handles user interactions           │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↓ depends on
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Domain Layer (Business Logic + Entities)  ← YOU ARE HERE    │
+/// │ - Driver Entity (this file)                                 │
+/// │ - DriverRepository Interface                                │
+/// │ - Use Cases (GetDriver, UpdateDriver, etc.)                 │
+/// │ - Value Objects (VehicleInfo, DriverStatus, etc.)           │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↑ implemented by
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Data Layer (Data Access + Models)                           │
+/// │ - DriverRepositoryImpl (implements interface)               │
+/// │ - DriverModel (JSON serialization)                          │
+/// │ - DriverRemoteDataSource (API calls)                        │
+/// │ - DriverLocalDataSource (SQLite/Drift)                      │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↓ uses
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Infrastructure Layer (External Services)                    │
+/// │ - HTTP Client (dio)                                         │
+/// │ - Database (Drift/SQLite)                                   │
+/// │ - Location Services (geolocator)                            │
+/// │ - Backend API (REST endpoints)                              │
+/// └─────────────────────────────────────────────────────────────┘
+/// ```
+///
+/// **Driver Verification Flow:**
+/// ```
+/// Driver Onboarding
 ///       ↓
-/// Data Layer (DriverModel - serialization)
+/// Create Driver (status: pending)
 ///       ↓
-/// Infrastructure (Remote API + Local DB)
+/// Submit to Backend API
+///       ↓
+/// Admin Reviews Application
+///       ↓
+///   ┌───┴───┐
+///   ↓       ↓
+/// Approve  Reject
+///   ↓       ↓
+/// approved rejected (with reason)
+///   ↓
+/// Driver Can Accept Orders
+/// ```
+///
+/// **Driver Availability Flow:**
+/// ```
+/// Driver Offline (app launched)
+///       ↓
+/// Driver Goes Online
+///       ↓
+/// availability: available
+/// currentLocation: GPS coords
+///       ↓
+/// Order Assigned
+///       ↓
+/// availability: busy
+///       ↓
+/// Delivery Completed
+///       ↓
+/// availability: available
+///       ↓
+/// Driver Ends Shift
+///       ↓
+/// availability: offline
+/// currentLocation: null
+/// ```
+///
+/// **Rating Update Flow:**
+/// ```
+/// Delivery Completed
+///       ↓
+/// Customer Rates Driver (1-5 stars)
+///       ↓
+/// Calculate New Average:
+/// newRating = (currentRating × totalRatings + newRating) / (totalRatings + 1)
+///       ↓
+/// Update Driver Entity:
+/// rating: newRating
+/// totalRatings: totalRatings + 1
+///       ↓
+/// Sync to Backend + Local DB
 /// ```
 ///
 /// **IMPROVEMENT:**

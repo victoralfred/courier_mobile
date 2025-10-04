@@ -6,6 +6,8 @@
 /// - Tracks driver work state (available vs busy)
 /// - Enables real-time driver availability tracking
 /// - Type-safe availability representation
+/// - Provides JSON serialization for API communication
+/// - Provides display names for UI presentation
 ///
 /// **Why it exists:**
 /// - Prevents order assignment to offline drivers
@@ -13,6 +15,8 @@
 /// - Enables driver work shift management
 /// - Supports real-time driver dashboard
 /// - Type-safe availability transitions
+/// - Eliminates string-based status errors
+/// - Clean Architecture domain value object pattern
 ///
 /// **Availability Workflow:**
 /// ```

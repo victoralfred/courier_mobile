@@ -68,12 +68,25 @@ import 'package:delivery_app/features/drivers/domain/value_objects/vehicle_type.
 /// }
 /// ```
 ///
+/// **Clean Architecture Context:**
+/// ```
+/// Domain Layer (Value Object) ← YOU ARE HERE
+///       ↓
+/// Used by Driver Entity
+///       ↓
+/// Validated in Domain Layer
+///       ↓
+/// Serialized in Data Layer (VehicleInfoModel)
+/// ```
+///
 /// **IMPROVEMENT:**
-/// - [High Priority] Add plate number format validation (Nigerian format)
-/// - [Medium Priority] Add vehicle registration number
-/// - [Medium Priority] Add insurance details (policy number, expiry)
-/// - [Low Priority] Add vehicle capacity (max weight, dimensions)
-/// - [Low Priority] Add vehicle photo URLs
+/// - [High Priority] Add plate number format validation (Nigerian format: ABC-123-XY)
+/// - [High Priority] Add vehicle registration number field
+/// - [Medium Priority] Add insurance details (policy number, expiry date)
+/// - [Medium Priority] Add vehicle inspection certificate (expiry date)
+/// - [Low Priority] Add vehicle capacity (max weight kg, cargo dimensions)
+/// - [Low Priority] Add vehicle photo URLs (front, back, sides, interior)
+/// - [Low Priority] Add fuel type (petrol, diesel, electric, hybrid)
 class VehicleInfo extends Equatable {
   /// Vehicle license plate number (validated: non-empty, trimmed)
   ///

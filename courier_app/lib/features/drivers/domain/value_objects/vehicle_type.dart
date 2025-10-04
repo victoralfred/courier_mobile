@@ -51,9 +51,22 @@
 /// };
 /// ```
 ///
+/// **Clean Architecture Context:**
+/// ```
+/// Domain Layer (Value Object Enum) ← YOU ARE HERE
+///       ↓
+/// Used by VehicleInfo Value Object
+///       ↓
+/// Used by Driver Entity
+///       ↓
+/// Serialized in Data Layer
+/// ```
+///
 /// **IMPROVEMENT:**
-/// - [Medium Priority] Add truck type (extra-large deliveries)
-/// - [Low Priority] Add electric_vehicle type (eco-friendly fleet)
+/// - [High Priority] Add truck type (extra-large deliveries, commercial freight)
+/// - [Medium Priority] Add tricycle type (keke, popular in Nigerian cities)
+/// - [Low Priority] Add electric_vehicle type (eco-friendly fleet initiative)
+/// - [Low Priority] Add scooter type (urban short-distance delivery)
 enum VehicleType {
   /// Motorcycle/Okada - Fast delivery for small packages
   motorcycle,

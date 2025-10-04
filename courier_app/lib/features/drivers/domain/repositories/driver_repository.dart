@@ -26,27 +26,133 @@ import 'package:delivery_app/features/drivers/domain/value_objects/driver_status
 /// - Supports hybrid data strategy (remote + local sync)
 /// - Enables offline-first driver management
 ///
-/// **Architecture:**
+/// **Clean Architecture Layers:**
 /// ```
-/// Domain Layer (this interface)
-///      ↑
-///      │ depends on
-///      │
-/// Data Layer (DriverRepositoryImpl)
-///      ↓
-/// Data Sources (Remote API + Local Database + Realtime Sync)
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Presentation Layer (BLoC/Cubit)                             │
+/// │ - DriverBloc, DriverProfileCubit                            │
+/// │ - Manages UI state and user interactions                    │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↓ calls
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Domain Layer (Use Cases)                                    │
+/// │ - GetDriverUseCase, UpdateDriverStatusUseCase               │
+/// │ - UpdateDriverAvailabilityUseCase, etc.                     │
+/// │ - Contains business logic validation                        │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↓ depends on
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Domain Layer (Repository Interface) ← YOU ARE HERE          │
+/// │ - DriverRepository (abstract class)                         │
+/// │ - Defines contracts for driver data operations              │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↑ implemented by
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Data Layer (Repository Implementation)                      │
+/// │ - DriverRepositoryImpl                                      │
+/// │ - Coordinates remote and local data sources                 │
+/// │ - Handles offline-first strategy                            │
+/// └─────────────────────────────────────────────────────────────┘
+///                           ↓ uses
+/// ┌─────────────────────────────────────────────────────────────┐
+/// │ Data Layer (Data Sources)                                   │
+/// │ - DriverRemoteDataSource (REST API)                         │
+/// │ - DriverLocalDataSource (Drift/SQLite)                      │
+/// │ - WebSocket for real-time updates                           │
+/// └─────────────────────────────────────────────────────────────┘
 /// ```
 ///
-/// **Data Flow:**
+/// **Data Flow (Fetch Driver from Backend):**
 /// ```
-/// 1. Presentation (BLoC) calls use case
-/// 2. Use case calls repository interface (this)
-/// 3. DriverRepositoryImpl implements interface
-/// 4. Remote data source fetches from backend API
-/// 5. Local data source stores in SQLite/Drift
-/// 6. Repository returns Either<Failure, Driver>
-/// 7. Use case returns to BLoC
-/// 8. BLoC emits state to UI
+/// User Action (e.g., Login)
+///       ↓
+/// DriverBloc → GetDriverUseCase
+///       ↓
+/// GetDriverUseCase → DriverRepository.fetchDriverFromBackend(userId)
+///       ↓
+/// DriverRepositoryImpl
+///       ↓
+///   ┌───┴───────────────────────────────┐
+///   ↓ Remote                             ↓ Local
+/// GET /drivers/by-user/{userId}    Check local DB
+///   ↓                                    ↓
+/// Receive Driver JSON              Find cached driver
+///   ↓                                    ↓
+/// Convert to Driver Entity         Return if exists
+///   ↓
+/// Save to Local DB ←──────────────────┘
+///   ↓
+/// Return Either<Failure, Driver>
+///   ↓
+/// GetDriverUseCase → DriverBloc
+///   ↓
+/// Emit DriverLoaded(driver) → UI
+/// ```
+///
+/// **Offline-First Strategy:**
+/// ```
+/// Read Operations (getDriverById, getDriverByUserId):
+///   1. Check local database FIRST (fast, offline-capable)
+///   2. Return cached data immediately
+///   3. Optionally sync in background
+///
+/// Write Operations (upsertDriver, updateStatus, updateAvailability):
+///   1. Validate data
+///   2. Try remote API call
+///   3. If success: Save to local DB
+///   4. If network failure: Queue for later sync, save locally
+///   5. Return success/failure
+///
+/// Real-time Operations (watchDriverById, watchDriverByUserId):
+///   1. Watch local database (reactive stream)
+///   2. Listen to WebSocket for remote changes
+///   3. Update local DB when remote changes detected
+///   4. Stream automatically emits new data
+/// ```
+///
+/// **Driver Onboarding Flow (upsertDriver):**
+/// ```
+/// Driver Fills Onboarding Form
+///       ↓
+/// Create Driver Entity
+///       ↓
+/// Validate (factory constructor)
+///       ↓
+/// DriverRepository.upsertDriver(driver)
+///       ↓
+/// POST /drivers {driverJson}
+///       ↓
+///   ┌───┴────┐
+///   ↓        ↓
+/// Success  Failure
+///   ↓        ↓
+/// Receive  Queue for
+/// Driver   offline sync
+///   ↓        ↓
+/// Save to Local DB
+///       ↓
+/// Return Right(Driver)
+///       ↓
+/// Navigate to "Pending Approval" screen
+/// ```
+///
+/// **Real-time Location Tracking Flow:**
+/// ```
+/// Driver Goes Online
+///       ↓
+/// GPS Service Started (every 15 seconds)
+///       ↓
+/// updateLocation(driverId, gpsCoords)
+///       ↓
+/// POST /drivers/{id}/location
+///       ↓
+/// Update Local DB
+///       ↓
+/// watchDriverById stream emits new location
+///       ↓
+/// Admin Dashboard Updates (WebSocket)
+///       ↓
+/// Order Assignment System sees new location
 /// ```
 ///
 /// **Error Handling Pattern:**

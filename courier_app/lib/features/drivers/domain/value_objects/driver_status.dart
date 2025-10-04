@@ -6,6 +6,8 @@
 /// - Controls driver access to order acceptance
 /// - Enables admin moderation of driver applications
 /// - Type-safe status representation (no string errors)
+/// - Provides JSON serialization for API communication
+/// - Provides user-friendly display names for UI
 ///
 /// **Why it exists:**
 /// - Enforces driver verification workflow
@@ -13,6 +15,9 @@
 /// - Tracks rejection and suspension reasons
 /// - Enables admin dashboard filtering
 /// - Type-safe status transitions
+/// - Eliminates hardcoded status strings
+/// - Clean Architecture domain value object pattern
+/// - Supports audit trail and compliance requirements
 ///
 /// **Status Workflow:**
 /// ```
