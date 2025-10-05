@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../services/app_logger.dart';
 import '../database/app_database.dart';
+import '../config/app_config.dart';
 import 'connectivity_service.dart';
 
 /// Priority levels for offline requests
@@ -87,6 +88,9 @@ class OfflineRequestQueue {
   /// Default TTL for requests (24 hours)
   final Duration defaultTtl;
 
+  /// Dio instance for making HTTP requests (can be injected for testing)
+  final Dio? _dio;
+
   /// Whether queue is currently processing
   bool _isProcessing = false;
 
@@ -96,7 +100,8 @@ class OfflineRequestQueue {
     this.maxQueueSize = 1000,
     this.maxRetries = 5,
     this.defaultTtl = const Duration(hours: 24),
-  }) {
+    Dio? dio,
+  }) : _dio = dio {
     // Listen to connectivity changes and auto-process queue
     _setupConnectivityListener();
   }
@@ -216,11 +221,21 @@ class OfflineRequestQueue {
         'count': pending.length,
       });
 
-      // Remove expired requests
+      // Remove expired requests and filter them from list
       await _removeExpiredRequests(pending);
 
+      // Filter out expired items (already deleted from DB)
+      final nonExpired = pending.where((item) {
+        try {
+          final payload = jsonDecode(item.payload) as Map<String, dynamic>;
+          return !_isExpired(payload);
+        } catch (e) {
+          return true; // Keep items with payload errors for processing
+        }
+      }).toList();
+
       // Sort by priority and creation time
-      final sorted = _sortByPriority(pending);
+      final sorted = _sortByPriority(nonExpired);
 
       // Process each request
       for (final item in sorted) {
@@ -306,7 +321,11 @@ class OfflineRequestQueue {
       });
 
       // Execute request
-      final dio = Dio();
+      final dio = _dio ?? Dio(BaseOptions(
+        baseUrl: AppConfig.config.apiBaseUrl,
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
+      ));
       await dio.fetch(options);
 
       // Mark as completed

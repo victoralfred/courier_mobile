@@ -135,7 +135,7 @@ class BackgroundSyncService {
           requiresDeviceIdle: false, // Can run while device active
           requiresCharging: false, // Can run on battery
         ),
-        existingWorkPolicy: ExistingWorkPolicy.replace, // Replace if exists
+        existingWorkPolicy: ExistingPeriodicWorkPolicy.update, // Update if exists
         backoffPolicy: BackoffPolicy.exponential,
         backoffPolicyDelay: const Duration(minutes: 1),
       );

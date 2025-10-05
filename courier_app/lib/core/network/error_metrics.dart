@@ -232,9 +232,8 @@ class ErrorMetrics {
     int errorsInWindow = 0;
     _errorTimestamps.forEach((key, timestamps) {
       if (key.startsWith('$endpoint:')) {
-        errorsInWindow += timestamps
-            .where((t) => t.isAfter(windowStart))
-            .length;
+        errorsInWindow +=
+            timestamps.where((t) => t.isAfter(windowStart)).length;
       }
     });
 
@@ -261,9 +260,7 @@ class ErrorMetrics {
   /// Gets all error counts as map
   ///
   /// **Returns:** Map of endpoint:statusCode to error count
-  Map<String, int> getAllErrorCounts() {
-    return Map.from(_errorCounts);
-  }
+  Map<String, int> getAllErrorCounts() => Map.from(_errorCounts);
 
   /// Resets all metrics (useful for testing)
   void reset() {

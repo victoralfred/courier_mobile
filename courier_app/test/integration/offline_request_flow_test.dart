@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dio/dio.dart';
+import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:delivery_app/core/network/offline_request_queue.dart';
 import 'package:delivery_app/core/network/interceptors/offline_request_interceptor.dart';
 import 'package:delivery_app/core/database/app_database.dart';
@@ -19,6 +20,7 @@ void main() {
     late OfflineRequestQueue queue;
     late OfflineRequestInterceptor interceptor;
     late Dio dio;
+    late DioAdapter dioAdapter;
     late MockAppDatabase mockDatabase;
     late MockSyncQueueDao mockSyncQueueDao;
     late MockConnectivityService mockConnectivityService;
@@ -30,9 +32,14 @@ void main() {
 
       when(mockDatabase.syncQueueDao).thenReturn(mockSyncQueueDao);
 
+      // Create Dio with mock adapter for testing
+      dio = Dio(BaseOptions(baseUrl: 'https://api.example.com'));
+      dioAdapter = DioAdapter(dio: dio);
+
       queue = OfflineRequestQueue(
         database: mockDatabase,
         connectivityService: mockConnectivityService,
+        dio: dio,
       );
 
       interceptor = OfflineRequestInterceptor(
@@ -40,7 +47,6 @@ void main() {
         offlineQueue: queue,
       );
 
-      dio = Dio(BaseOptions(baseUrl: 'https://api.example.com'));
       dio.interceptors.add(interceptor);
     });
 
@@ -49,6 +55,13 @@ void main() {
       when(mockConnectivityService.isOnline()).thenAnswer((_) async => false);
       when(mockSyncQueueDao.getPendingOperations())
           .thenAnswer((_) async => []);
+
+      // Mock HTTP response for when online
+      dioAdapter.onPost(
+        '/orders',
+        (server) => server.reply(200, {'success': true}),
+        data: {'item': 'test'},
+      );
 
       int queueId = 0;
       when(mockSyncQueueDao.addToQueue(
@@ -83,7 +96,7 @@ void main() {
       when(mockConnectivityService.isOnline()).thenAnswer((_) async => true);
 
       final now = DateTime.now();
-      final queuedItem = SyncQueueData(
+      final queuedItem = SyncQueueTableData(
         id: queueId,
         entityType: 'order',
         entityId: 'req-123',
@@ -126,6 +139,23 @@ void main() {
       when(mockConnectivityService.isOnline()).thenAnswer((_) async => false);
       when(mockSyncQueueDao.getPendingOperations())
           .thenAnswer((_) async => []);
+
+      // Mock HTTP responses for when online
+      dioAdapter.onPost(
+        '/analytics/events',
+        (server) => server.reply(200, {'success': true}),
+        data: {"event": "click"},
+      );
+      dioAdapter.onPost(
+        '/orders',
+        (server) => server.reply(200, {'success': true}),
+        data: {"item": "urgent"},
+      );
+      dioAdapter.onPut(
+        '/users/profile',
+        (server) => server.reply(200, {'success': true}),
+        data: {"name": "Test"},
+      );
 
       int nextQueueId = 1;
       when(mockSyncQueueDao.addToQueue(
@@ -170,7 +200,7 @@ void main() {
       final now = DateTime.now();
       final queueItems = [
         // Low priority (created first)
-        SyncQueueData(
+        SyncQueueTableData(
           id: 1,
           entityType: 'unknown',
           entityId: 'req-low',
@@ -193,7 +223,7 @@ void main() {
           completedAt: null,
         ),
         // Critical priority (created second)
-        SyncQueueData(
+        SyncQueueTableData(
           id: 2,
           entityType: 'order',
           entityId: 'req-critical',
@@ -216,7 +246,7 @@ void main() {
           completedAt: null,
         ),
         // Normal priority (created third)
-        SyncQueueData(
+        SyncQueueTableData(
           id: 3,
           entityType: 'user',
           entityId: 'req-normal',
@@ -284,7 +314,7 @@ void main() {
       when(mockConnectivityService.isOnline()).thenAnswer((_) async => true);
 
       final now = DateTime.now();
-      final expiredItem = SyncQueueData(
+      final expiredItem = SyncQueueTableData(
         id: 1,
         entityType: 'order',
         entityId: 'req-expired',
@@ -329,7 +359,7 @@ void main() {
       // Create 1000 mock items (maxQueueSize = 1000)
       final fullQueue = List.generate(
         1000,
-        (i) => SyncQueueData(
+        (i) => SyncQueueTableData(
           id: i,
           entityType: 'order',
           entityId: 'id-$i',

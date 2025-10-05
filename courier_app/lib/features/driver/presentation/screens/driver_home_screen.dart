@@ -3,6 +3,8 @@ import 'package:get_it/get_it.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/routing/route_names.dart';
 import '../../../auth/domain/repositories/auth_repository.dart';
+import '../../../../core/widgets/common/connectivity_banner.dart';
+import '../../../../core/widgets/common/sync_status_indicator.dart';
 
 class DriverHomeScreen extends StatelessWidget {
   const DriverHomeScreen({super.key});
@@ -54,17 +56,25 @@ class DriverHomeScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Driver Dashboard'),
           actions: [
+            const SyncStatusIndicator(),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () => _handleLogout(context),
             ),
           ],
         ),
-        body: const Center(
-          child: Text(
-            'Welcome Driver!',
-            style: TextStyle(fontSize: 24),
-          ),
+        body: const Column(
+          children: [
+            ConnectivityBanner(),
+            Expanded(
+              child: Center(
+                child: Text(
+                  'Welcome Driver!',
+                  style: TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+          ],
         ),
         bottomNavigationBar: BottomNavigationBar(
           items: const [

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/mockito.dart';
 import 'package:mockito/annotations.dart';
 import 'package:dio/dio.dart';
+import 'package:http_mock_adapter/http_mock_adapter.dart';
 import 'package:delivery_app/core/network/offline_request_queue.dart';
 import 'package:delivery_app/core/database/app_database.dart';
 import 'package:delivery_app/core/network/connectivity_service.dart';
@@ -18,6 +19,8 @@ void main() {
   late MockAppDatabase mockDatabase;
   late MockSyncQueueDao mockSyncQueueDao;
   late MockConnectivityService mockConnectivityService;
+  late Dio dio;
+  late DioAdapter dioAdapter;
 
   setUp(() {
     mockDatabase = MockAppDatabase();
@@ -26,11 +29,16 @@ void main() {
 
     when(mockDatabase.syncQueueDao).thenReturn(mockSyncQueueDao);
 
+    // Create Dio with mock adapter for testing
+    dio = Dio(BaseOptions(baseUrl: 'https://test.example.com'));
+    dioAdapter = DioAdapter(dio: dio);
+
     queue = OfflineRequestQueue(
       database: mockDatabase,
       connectivityService: mockConnectivityService,
       maxQueueSize: 10,
       maxRetries: 3,
+      dio: dio,
     );
   });
 
@@ -205,6 +213,13 @@ void main() {
       // Arrange
       when(mockConnectivityService.isOnline()).thenAnswer((_) async => true);
 
+      // Mock HTTP response
+      dioAdapter.onPost(
+        '/api/v1/orders',
+        (server) => server.reply(200, {'success': true}),
+        data: {"item": "test"},
+      );
+
       final now = DateTime.now();
       final mockItem = SyncQueueTableData(
         id: 1,
@@ -325,6 +340,18 @@ void main() {
     test('should process requests in priority order', () async {
       // Arrange
       when(mockConnectivityService.isOnline()).thenAnswer((_) async => true);
+
+      // Mock HTTP responses for both routes
+      dioAdapter.onPost(
+        '/api/v1/orders',
+        (server) => server.reply(200, {'success': true}),
+        data: {},
+      );
+      dioAdapter.onPost(
+        '/api/v1/analytics',
+        (server) => server.reply(200, {'success': true}),
+        data: {},
+      );
 
       final now = DateTime.now();
       final lowPriorityItem = SyncQueueTableData(
