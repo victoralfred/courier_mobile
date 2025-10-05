@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:drift/native.dart';
 import 'package:delivery_app/core/database/app_database.dart';
 import 'package:delivery_app/core/network/offline_request_queue.dart';
 import 'package:delivery_app/core/network/connectivity_service.dart';
@@ -53,8 +54,8 @@ void main() {
     final uuid = const Uuid();
 
     setUp(() async {
-      // Create in-memory database for isolated tests
-      database = AppDatabase();
+      // Create in-memory database for isolated tests (no file system access)
+      database = AppDatabase.test(NativeDatabase.memory());
       connectivityService = MockConnectivityService();
       driverRepo = DriverRepositoryImpl(database: database);
       orderRepo = OrderRepositoryImpl(database: database);
@@ -176,9 +177,10 @@ void main() {
 
         final payload = jsonDecode(updateOp.payload);
         expect(payload['endpoint'], contains('PUT /drivers/'));
-        expect(payload['data']['vehicle_plate'], equals('XYZ-456-AB'));
-        expect(payload['data']['vehicle_make'], equals('Toyota'));
-        expect(payload['data']['vehicle_model'], equals('Camry'));
+        // Vehicle info is nested in toUpdateJson()
+        expect(payload['data']['vehicleInfo']['plate'], equals('XYZ-456-AB'));
+        expect(payload['data']['vehicleInfo']['make'], equals('Toyota'));
+        expect(payload['data']['vehicleInfo']['model'], equals('Camry'));
       });
 
       test('should queue driver deletion when offline', () async {
@@ -358,18 +360,23 @@ void main() {
 
       test('should mark sync queue items as failed with error message', () async {
         // Arrange
-        await _createTestDriver(driverRepo);
+        final driver = await _createTestDriver(driverRepo);
         final queueItems = await database.syncQueueDao.getPendingOperations();
+        final queueId = queueItems.first.id;
 
         // Act - Mark as failed
         await database.syncQueueDao.markAsFailed(
-          queueId: queueItems.first.id,
+          queueId: queueId,
           error: 'Network timeout after 3 retries',
         );
 
-        // Assert - Still in queue but with error
-        final failedItems = await database.syncQueueDao.getPendingOperations();
+        // Assert - Item marked as failed with error (not in pending anymore)
+        final failedItems = await database.syncQueueDao.getOperationsByEntity(
+          entityType: 'driver',
+          entityId: driver.id,
+        );
         expect(failedItems.length, equals(1));
+        expect(failedItems.first.status, equals('failed'));
         expect(failedItems.first.lastError, contains('Network timeout'));
         expect(failedItems.first.retryCount, greaterThan(0));
       });
