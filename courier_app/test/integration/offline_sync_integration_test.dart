@@ -42,6 +42,9 @@ import 'package:uuid/uuid.dart';
 /// - Sync queue persistence and priority
 /// - Queue processing order and cleanup
 void main() {
+  // Initialize Flutter test bindings
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   group('Offline Sync Integration Tests', () {
     late AppDatabase database;
     late MockConnectivityService connectivityService;
@@ -146,6 +149,36 @@ void main() {
 
         final payload = jsonDecode(availUpdate.payload);
         expect(payload['data']['availability'], equals('available'));
+      });
+
+      test('should queue driver profile update when offline', () async {
+        // Arrange - Create driver first
+        final driver = await _createTestDriver(driverRepo);
+
+        // Act - Update driver profile (vehicle info)
+        final updatedDriver = driver.copyWith(
+          vehicleInfo: VehicleInfo(
+            plate: 'XYZ-456-AB',
+            type: VehicleType.car,
+            make: 'Toyota',
+            model: 'Camry',
+            year: 2024,
+            color: 'Blue',
+          ),
+        );
+        await driverRepo.upsertDriver(updatedDriver);
+
+        // Assert - UPDATE operation queued (should be the second queue item)
+        final queueItems = await database.syncQueueDao.getPendingOperations();
+        final updateOp = queueItems.firstWhere(
+          (item) => item.operation == 'update',
+        );
+
+        final payload = jsonDecode(updateOp.payload);
+        expect(payload['endpoint'], contains('PUT /drivers/'));
+        expect(payload['data']['vehicle_plate'], equals('XYZ-456-AB'));
+        expect(payload['data']['vehicle_make'], equals('Toyota'));
+        expect(payload['data']['vehicle_model'], equals('Camry'));
       });
 
       test('should queue driver deletion when offline', () async {
@@ -474,10 +507,13 @@ class MockConnectivityService implements ConnectivityService {
   Future<void> startMonitoring() async {}
 
   @override
+  Future<void> stopMonitoring() async {}
+
+  @override
   Future<void> dispose() async {}
 
   @override
-  Future<void> checkAndSync() async {}
+  Future<bool> checkAndSync() async => false;
 
   @override
   Stream<bool> get connectivityStream => Stream.value(_isOnline);
