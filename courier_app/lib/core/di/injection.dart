@@ -101,7 +101,7 @@ Future<void> init() async {
   getIt.registerLazySingleton<CsrfTokenManager>(
     () => CsrfTokenManager(
       dio: csrfDio,
-      getAuthToken: () => getIt<ApiClient>().getAuthToken(),
+      getAuthToken: () => getIt<ApiClient>().getAuthToken()?.token,
     ),
   );
 

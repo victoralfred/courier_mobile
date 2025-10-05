@@ -8,8 +8,6 @@ import 'route_names.dart';
 
 /// Guard to check if user is authenticated
 class AuthGuard {
-  static final _logger = AppLogger('Routing');
-
   final AuthRepository authRepository;
   final DriverRepository driverRepository;
 
@@ -85,6 +83,8 @@ class AuthGuard {
 
 /// Guard to check role-based access
 class RoleGuard {
+  static final _logger = AppLogger('Routing');
+
   final AuthRepository authRepository;
   final DriverRepository driverRepository;
 
