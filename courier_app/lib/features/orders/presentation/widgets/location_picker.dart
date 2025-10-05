@@ -212,7 +212,9 @@ class _LocationPickerDialogState extends State<LocationPickerDialog> {
 
       // Get current position
       final position = await Geolocator.getCurrentPosition(
-        desiredAccuracy: LocationAccuracy.high,
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
       );
 
       // Reverse geocode to get address
