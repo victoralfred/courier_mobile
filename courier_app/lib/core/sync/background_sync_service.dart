@@ -80,7 +80,6 @@ class BackgroundSyncService {
       // Initialize WorkManager with callback dispatcher
       await Workmanager().initialize(
         callbackDispatcher,
-        isInDebugMode: false, // Set to true for debugging
       );
 
       _logger.info('BackgroundSyncService initialized successfully');
