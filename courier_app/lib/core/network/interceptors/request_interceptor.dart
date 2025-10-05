@@ -121,15 +121,24 @@ class RequestInterceptor extends Interceptor {
   /// ```
   ///
   /// **IMPROVEMENT:**
-  /// - [High Priority] Return request ID from method for error correlation
+  /// - [✅ COMPLETED] Store request ID in extra for error correlation
   /// - [Medium Priority] Add request ID to logs and error reports
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    // Generate unique request ID
+    final requestId = _uuid.v4();
+    final requestTime = DateTime.now();
+
     // Add X-Request-ID header for request tracking
-    options.headers['X-Request-ID'] = _uuid.v4();
+    options.headers['X-Request-ID'] = requestId;
 
     // Add timestamp header
-    options.headers['X-Request-Time'] = DateTime.now().toIso8601String();
+    options.headers['X-Request-Time'] = requestTime.toIso8601String();
+
+    // Store request ID and time in extra for error correlation
+    // This allows error handlers to access the request ID without parsing headers
+    options.extra['request_id'] = requestId;
+    options.extra['request_time'] = requestTime;
 
     // Continue with the request
     handler.next(options);

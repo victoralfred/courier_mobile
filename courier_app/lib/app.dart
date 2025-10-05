@@ -7,6 +7,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get_it/get_it.dart';
 import 'core/config/app_config.dart';
+import 'core/connectivity/cubit/connectivity_cubit.dart';
 
 class CourierApp extends StatefulWidget {
   const CourierApp({super.key});
@@ -33,16 +34,19 @@ class _CourierAppState extends State<CourierApp> {
         designSize: const Size(375, 812), // iPhone X size as base
         minTextAdapt: true,
         splitScreenMode: true,
-        builder: (context, child) => RepositoryProvider<AuthRepository>(
-          create: (_) => GetIt.instance<AuthRepository>(),
-          child: MaterialApp.router(
-            title: AppStrings.appTitle,
-            debugShowCheckedModeBanner: AppConfig.isDebug,
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-              useMaterial3: true,
+        builder: (context, child) => BlocProvider<ConnectivityCubit>(
+          create: (_) => GetIt.instance<ConnectivityCubit>()..startMonitoring(),
+          child: RepositoryProvider<AuthRepository>(
+            create: (_) => GetIt.instance<AuthRepository>(),
+            child: MaterialApp.router(
+              title: AppStrings.appTitle,
+              debugShowCheckedModeBanner: AppConfig.isDebug,
+              theme: ThemeData(
+                colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+                useMaterial3: true,
+              ),
+              routerConfig: _appRouter.router,
             ),
-            routerConfig: _appRouter.router,
           ),
         ),
       );

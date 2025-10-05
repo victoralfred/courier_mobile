@@ -156,6 +156,22 @@ class AppStrings {
   static const String errorOfflineFeature =
       'This feature is not available offline';
 
+  // Connectivity Status
+  static const String connectivityStatusOnline = 'Online';
+  static const String connectivityStatusOffline = 'Offline';
+  static const String connectivityStatusSyncing = 'Syncing...';
+  static const String connectivityBannerOffline = 'You\'re offline';
+  static const String connectivityBannerOfflineWithPending =
+      'You\'re offline. {count} {items} will sync when connected';
+  static const String connectivityBannerSyncing = 'Syncing {count} {items}...';
+  static const String connectivitySyncComplete = 'All changes synced';
+  static const String connectivityItemSingular = 'change';
+  static const String connectivityItemPlural = 'changes';
+  static const String connectivityPendingCount = '{count} pending';
+  static const String connectivitySyncIndicatorAllSynced = 'All synced';
+  static const String connectivitySyncIndicatorSyncing = 'Syncing...';
+  static const String connectivitySyncIndicatorPending = '{count} pending';
+
   // Success Messages
   static const String successGeneral = 'Operation completed successfully';
   static const String successDataSaved = 'Data saved successfully';

@@ -40,6 +40,7 @@ import 'package:delivery_app/features/driver/status/presentation/blocs/driver_st
 import 'package:delivery_app/features/orders/data/repositories/order_repository_impl.dart';
 import 'package:delivery_app/features/orders/domain/repositories/order_repository.dart';
 import 'package:delivery_app/features/orders/presentation/blocs/order/order_bloc.dart';
+import 'package:delivery_app/core/connectivity/cubit/connectivity_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -101,7 +102,7 @@ Future<void> init() async {
   getIt.registerLazySingleton<CsrfTokenManager>(
     () => CsrfTokenManager(
       dio: csrfDio,
-      getAuthToken: () => getIt<ApiClient>().getAuthToken(),
+      getAuthToken: () => getIt<ApiClient>().getAuthToken()?.token,
     ),
   );
 
@@ -242,6 +243,15 @@ Future<void> init() async {
   getIt.registerFactory(
     () => OrderBloc(
       orderRepository: getIt<OrderRepository>(),
+    ),
+  );
+
+  // Connectivity - Cubit (singleton for app-wide state)
+  getIt.registerLazySingleton(
+    () => ConnectivityCubit(
+      connectivityService: getIt<ConnectivityService>(),
+      database: getIt<AppDatabase>(),
+      connectivity: getIt<Connectivity>(),
     ),
   );
 }
