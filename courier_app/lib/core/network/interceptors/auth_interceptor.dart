@@ -1,4 +1,6 @@
 import 'package:dio/dio.dart';
+import 'package:delivery_app/core/services/app_logger.dart';
+import 'package:delivery_app/features/auth/domain/entities/jwt_token.dart';
 
 /// [AuthInterceptor] - Dio interceptor that automatically injects authentication and CSRF tokens into requests
 ///
@@ -56,21 +58,23 @@ import 'package:dio/dio.dart';
 /// ```
 ///
 /// **IMPROVEMENT:**
-/// - [High Priority] Remove debug print statements (use logging service)
-/// - [Medium Priority] Add token expiry check before injection (prevent sending expired tokens)
 /// - [Medium Priority] Support multiple auth schemes (Bearer, Basic, API Key)
 /// - [Low Priority] Add metrics for auth header injection success/failure
 /// - [Low Priority] Support conditional auth (some endpoints don't need auth)
 class AuthInterceptor extends Interceptor {
-  /// Function to retrieve current JWT access token
+  /// Logger instance for auth interceptor operations
+  static final _logger = AppLogger.auth();
+
+  /// Function to retrieve current JWT token object
   ///
   /// **Why function instead of direct token:**
   /// - Token may change during app lifecycle (refresh, login, logout)
   /// - Ensures we always get the latest token
   /// - Avoids stale token issues
+  /// - Provides access to expiry metadata for validation
   ///
-  /// **Returns:** Current JWT access token or null if not authenticated
-  final String? Function() getAuthToken;
+  /// **Returns:** Current JwtToken object or null if not authenticated
+  final JwtToken? Function() getAuthToken;
 
   /// Function to retrieve current CSRF token for write operations
   ///
@@ -85,13 +89,16 @@ class AuthInterceptor extends Interceptor {
   /// Creates authentication interceptor
   ///
   /// **Parameters:**
-  /// - [getAuthToken]: Function to fetch current JWT token (required)
+  /// - [getAuthToken]: Function to fetch current JwtToken object (required)
   /// - [getCsrfToken]: Function to fetch current CSRF token (required)
   ///
   /// **Example:**
   /// ```dart
   /// final interceptor = AuthInterceptor(
-  ///   getAuthToken: () => secureStorage.read('access_token'),
+  ///   getAuthToken: () async {
+  ///     final result = await tokenManager.getToken();
+  ///     return result;
+  ///   },
   ///   getCsrfToken: () => csrfManager.getToken(),
   /// );
   /// ```
@@ -103,22 +110,33 @@ class AuthInterceptor extends Interceptor {
   /// Intercepts request and injects authentication and CSRF tokens
   ///
   /// **What it does:**
-  /// 1. Fetches current JWT access token via getAuthToken()
-  /// 2. Adds Authorization header with Bearer scheme if token available
-  /// 3. Checks if request is a write operation (POST/PUT/DELETE/PATCH)
-  /// 4. Fetches CSRF token via getCsrfToken() for write operations
-  /// 5. Adds X-CSRF-Token header if token available and method is write
-  /// 6. Forwards request to next interceptor in chain
+  /// 1. Fetches current JWT token object via getAuthToken()
+  /// 2. Checks token expiry and logs warnings if expired or should refresh
+  /// 3. Adds Authorization header with Bearer scheme if token available
+  /// 4. Checks if request is a write operation (POST/PUT/DELETE/PATCH)
+  /// 5. Fetches CSRF token via getCsrfToken() for write operations
+  /// 6. Adds X-CSRF-Token header if token available and method is write
+  /// 7. Forwards request to next interceptor in chain
   ///
   /// **Token Injection Rules:**
-  /// - **JWT Token**: Added to ALL requests (if available)
+  /// - **JWT Token**: Added to ALL requests (if available and not null)
   /// - **CSRF Token**: Added ONLY to write operations (if available)
+  ///
+  /// **Token Expiry Handling:**
+  /// - Checks token.isExpired before injection
+  /// - Checks token.shouldRefresh (5 min before expiry)
+  /// - Logs warnings for expired/expiring tokens
+  /// - Still injects expired tokens (backend will reject with 401)
   ///
   /// **Flow:**
   /// ```
   /// onRequest
   ///    ↓
-  /// Get JWT token → Add Authorization header (if token exists)
+  /// Get JWT token object
+  ///    ↓
+  /// Check expiry → Log warning if expired/should refresh
+  ///    ↓
+  /// Add Authorization header (if token exists)
   ///    ↓
   /// Is write method? → NO → Forward request
   ///    ↓ YES
@@ -133,45 +151,55 @@ class AuthInterceptor extends Interceptor {
   ///
   /// **Graceful Degradation:**
   /// - If auth token unavailable, request continues without Authorization header
+  /// - If token expired, still adds to header (logs warning, backend will reject)
   /// - If CSRF token unavailable, write request continues (backend may reject)
-  /// - Logs warnings in debug mode when tokens are missing
-  ///
-  /// **IMPROVEMENT:**
-  /// - [High Priority] Remove print statements (use logging service)
-  /// - [Medium Priority] Add retry logic when token is expired
+  /// - Logs warnings in debug mode when tokens are missing/expired
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
-    // Debug logging
-    print('=== AUTH INTERCEPTOR DEBUG ===');
-    print('Request: ${options.method} ${options.path}');
+    _logger.debug('Auth: Processing request', metadata: {
+      'method': options.method,
+      'path': options.path,
+    });
 
-    // Add Bearer token if available
-    final authToken = getAuthToken();
-    print('Auth token from getAuthToken(): ${authToken != null ? "YES (${authToken.substring(0, 20)}...)" : "NO"}');
+    // Get JWT token object
+    final jwtToken = getAuthToken();
 
-    if (authToken != null && authToken.isNotEmpty) {
-      options.headers['Authorization'] = 'Bearer $authToken';
-      print('✅ Added Authorization header');
+    if (jwtToken != null) {
+      // Check token expiry status
+      if (jwtToken.isExpired) {
+        _logger.warning('JWT token is expired', metadata: {
+          'expiresAt': jwtToken.expiresAt.toIso8601String(),
+          'expiredAgo': DateTime.now().difference(jwtToken.expiresAt).inMinutes,
+        });
+      } else if (jwtToken.shouldRefresh) {
+        _logger.warning('JWT token should be refreshed soon', metadata: {
+          'expiresAt': jwtToken.expiresAt.toIso8601String(),
+          'expiresIn': jwtToken.remainingLifetime.inMinutes,
+        });
+      }
+
+      // Add Authorization header with full token string
+      options.headers['Authorization'] = '${jwtToken.type} ${jwtToken.token}';
+      _logger.info('Authorization header added', metadata: {
+        'tokenType': jwtToken.type,
+        'isExpired': jwtToken.isExpired,
+        'shouldRefresh': jwtToken.shouldRefresh,
+      });
     } else {
-      print('⚠️  No auth token - request will likely fail if protected');
+      _logger.warning('No auth token - request will likely fail if protected');
     }
 
     // Add CSRF token for write operations (POST, PUT, DELETE, PATCH)
     final csrfToken = getCsrfToken();
-    print('CSRF token available: ${csrfToken != null ? "YES" : "NO"}');
-    print('Is write method: ${_isWriteMethod(options.method)}');
+    final hasCsrfToken = csrfToken != null && csrfToken.isNotEmpty;
+    final isWriteOp = _isWriteMethod(options.method);
 
-    if (csrfToken != null &&
-        csrfToken.isNotEmpty &&
-        _isWriteMethod(options.method)) {
+    if (hasCsrfToken && isWriteOp) {
       options.headers['X-CSRF-Token'] = csrfToken;
-      print('✅ Added CSRF token header');
-    } else if (_isWriteMethod(options.method)) {
-      print('⚠️  No CSRF token for write operation - may fail');
+      _logger.info('CSRF token header added');
+    } else if (isWriteOp) {
+      _logger.warning('No CSRF token for write operation - may fail');
     }
-
-    print('Final headers: ${options.headers}');
-    print('==============================');
 
     handler.next(options);
   }

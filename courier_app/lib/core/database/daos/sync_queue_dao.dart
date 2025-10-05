@@ -240,11 +240,13 @@ class SyncQueueDao extends DatabaseAccessor<AppDatabase>
   }
 
   /// Watch pending operations count
-  Stream<List<int>> watchPendingCount() {
+  Stream<int> watchPendingCount() {
     final query = selectOnly(syncQueueTable)
       ..addColumns([syncQueueTable.id.count()])
       ..where(syncQueueTable.status.equals('pending'));
 
-    return query.map((row) => row.read(syncQueueTable.id.count()) ?? 0).watch();
+    return query
+        .map((row) => row.read(syncQueueTable.id.count()) ?? 0)
+        .watchSingle();
   }
 }

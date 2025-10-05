@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import '../../../../core/constants/app_strings.dart';
 import '../../../../core/error/failures.dart';
 import '../../../../core/network/api_client.dart';
+import '../../../../core/services/app_logger.dart';
 import '../../domain/entities/jwt_token.dart';
 import '../../domain/services/token_manager.dart';
 import '../datasources/token_local_data_source.dart';
@@ -113,6 +114,9 @@ import '../datasources/token_local_data_source.dart';
 /// - [Low Priority] Add token validation before refresh (check format, signature)
 /// - Currently trusts local storage token validity
 class TokenManagerImpl implements TokenManager {
+  /// Logger instance for token management operations
+  static final _logger = AppLogger.auth();
+
   /// Local data source for token persistence
   ///
   /// **Why:**
@@ -478,7 +482,7 @@ class TokenManagerImpl implements TokenManager {
 
       // Call refresh endpoint
       final response = await apiClient.post(
-        '/users/refresh',
+        '/api/v1/auth/refresh',
         data: {
           'refresh_token': currentToken.refreshToken,
         },
@@ -505,9 +509,8 @@ class TokenManagerImpl implements TokenManager {
         // Store the new token
         await localDataSource.storeToken(newToken);
 
-        // Update API client with new token auth/refresh
-        apiClient.setAuthToken(newToken.token,
-            refreshToken: newToken.refreshToken);
+        // Update API client with new JWT token object
+        apiClient.setAuthToken(newToken);
 
         // Notify listeners
         _tokenRefreshController.add(newToken);
@@ -611,9 +614,9 @@ class TokenManagerImpl implements TokenManager {
     try {
       await localDataSource.storeToken(token);
 
-      // Update API client with auth token
+      // Update API client with JWT token object
       // Note: CSRF tokens are now fetched automatically by CsrfInterceptor
-      apiClient.setAuthToken(token.token, refreshToken: token.refreshToken);
+      apiClient.setAuthToken(token);
 
       // Notify auth state change
       _authStateController.add(true);
@@ -782,7 +785,9 @@ class TokenManagerImpl implements TokenManager {
   void unawaited(Future<void> future) {
     future.catchError((error) {
       // Log error but don't throw
-      print('Background refresh error: $error');
+      _logger.error('Background token refresh failed', error: error, metadata: {
+        'context': 'unawaited_future',
+      });
     });
   }
 }

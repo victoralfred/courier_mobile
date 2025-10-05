@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import '../../error/exceptions.dart';
 import '../../constants/app_strings.dart';
+import '../../services/app_logger.dart';
+import '../error_metrics.dart';
 
 /// [ErrorInterceptor] - Dio interceptor that converts HTTP errors into typed app exceptions
 ///
@@ -88,12 +90,19 @@ import '../../constants/app_strings.dart';
 /// ```
 ///
 /// **IMPROVEMENT:**
-/// - [High Priority] Add structured logging for errors (track error rates, patterns)
-/// - [Medium Priority] Add retry logic for transient errors (500, 502, 503)
+/// - [✅ COMPLETED] Add structured logging for errors (track error rates, patterns)
+/// - [✅ COMPLETED] Add metrics for error tracking
+/// - [✅ COMPLETED] Support circuit breaker pattern (stop requests after repeated failures)
+/// - [Medium Priority] Add retry logic for transient errors (500, 502, 503) - See RetryInterceptor
 /// - [Medium Priority] Add custom error handling per endpoint (some endpoints have different formats)
-/// - [Low Priority] Add metrics for error tracking (Sentry, Firebase Crashlytics)
-/// - [Low Priority] Support circuit breaker pattern (stop requests after repeated failures)
+/// - [Low Priority] Add external monitoring integration (Sentry, Firebase Crashlytics)
 class ErrorInterceptor extends Interceptor {
+  /// Logger instance for error logging
+  final AppLogger _logger = AppLogger.network();
+
+  /// Error metrics tracker for circuit breaker and monitoring
+  final ErrorMetrics errorMetrics;
+
   /// Optional callback invoked when JWT token expires (401 session expired)
   ///
   /// **Why needed:**
@@ -120,14 +129,19 @@ class ErrorInterceptor extends Interceptor {
   ///
   /// **Parameters:**
   /// - [onTokenExpired]: Optional callback for token expiration (default: null)
+  /// - [errorMetrics]: Optional error metrics tracker (default: new instance)
   ///
   /// **Example:**
   /// ```dart
   /// final interceptor = ErrorInterceptor(
   ///   onTokenExpired: () => handleSessionExpired(),
+  ///   errorMetrics: ErrorMetrics(),
   /// );
   /// ```
-  ErrorInterceptor({this.onTokenExpired});
+  ErrorInterceptor({
+    this.onTokenExpired,
+    ErrorMetrics? errorMetrics,
+  }) : errorMetrics = errorMetrics ?? ErrorMetrics();
 
   /// Intercepts HTTP errors and converts them to typed app exceptions
   ///
@@ -168,6 +182,29 @@ class ErrorInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) async {
     final exception = _handleError(err);
+    final endpoint = err.requestOptions.endpointPath;
+    final requestId = err.requestOptions.extra['request_id'] as String?;
+    final statusCode = err.response?.statusCode;
+
+    // Record error in metrics
+    if (statusCode != null) {
+      errorMetrics.recordError(endpoint, statusCode);
+    }
+
+    // Log error with structured metadata
+    _logger.error(
+      'HTTP request failed',
+      error: exception,
+      metadata: {
+        'request_id': requestId ?? 'unknown',
+        'endpoint': endpoint,
+        'method': err.requestOptions.method,
+        'status_code': statusCode ?? 'N/A',
+        'error_type': exception.runtimeType.toString(),
+        'error_code': _getErrorCode(exception),
+        'error_message': _getErrorMessage(exception),
+      },
+    );
 
     // Handle token expiration
     if (exception is AuthenticationException &&
@@ -185,6 +222,18 @@ class ErrorInterceptor extends Interceptor {
       ),
     );
   }
+
+  /// Extracts error code from exception
+  String _getErrorCode(AppException exception) {
+    if (exception is AuthenticationException) return exception.code ?? 'AUTH_ERROR';
+    if (exception is ValidationException) return exception.code ?? 'VALIDATION_ERROR';
+    if (exception is ServerException) return exception.code ?? 'SERVER_ERROR';
+    if (exception is NetworkException) return exception.code ?? 'NETWORK_ERROR';
+    return 'UNKNOWN';
+  }
+
+  /// Extracts error message from exception
+  String _getErrorMessage(AppException exception) => exception.message;
 
   /// Classifies DioException and converts to appropriate app exception
   ///

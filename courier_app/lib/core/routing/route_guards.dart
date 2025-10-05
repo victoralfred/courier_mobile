@@ -3,6 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/domain/entities/user_role.dart';
 import '../../features/auth/domain/repositories/auth_repository.dart';
 import '../../features/drivers/domain/repositories/driver_repository.dart';
+import '../services/app_logger.dart';
 import 'route_names.dart';
 
 /// Guard to check if user is authenticated
@@ -82,6 +83,8 @@ class AuthGuard {
 
 /// Guard to check role-based access
 class RoleGuard {
+  static final _logger = AppLogger('Routing');
+
   final AuthRepository authRepository;
   final DriverRepository driverRepository;
 
@@ -95,12 +98,16 @@ class RoleGuard {
     BuildContext context,
     GoRouterState state,
   ) async {
-    print('RoleGuard: Checking customer role requirement for ${state.uri.path}');
+    _logger.debug('Checking customer role requirement', metadata: {
+      'path': state.uri.path,
+    });
     final isAuthenticated = await authRepository.isAuthenticated();
-    print('RoleGuard: User authenticated: $isAuthenticated');
+    _logger.debug('Authentication status checked', metadata: {
+      'isAuthenticated': isAuthenticated,
+    });
 
     if (!isAuthenticated) {
-      print('RoleGuard: User not authenticated, redirecting to login');
+      _logger.info('User not authenticated, redirecting to login');
       return RoutePaths.login;
     }
 
@@ -108,11 +115,15 @@ class RoleGuard {
 
     return await userResult.fold(
       (failure) async {
-        print('RoleGuard: Failed to get current user: ${failure.message}');
+        _logger.error('Failed to get current user', metadata: {
+          'error': failure.message,
+        });
         return RoutePaths.login;
       },
       (user) async {
-        print('RoleGuard: Current user role: ${user.role.type}');
+        _logger.debug('User role retrieved', metadata: {
+          'role': user.role.type,
+        });
         // Allow both customer and admin roles
         if (user.role.type != UserRoleType.customer &&
             user.role.type != UserRoleType.admin) {
@@ -130,7 +141,7 @@ class RoleGuard {
               return RoutePaths.login;
           }
         }
-        print('RoleGuard: User has correct role, allowing navigation');
+        _logger.debug('User has correct role, allowing navigation');
         return null; // User has customer role
       },
     );
@@ -164,37 +175,41 @@ class RoleGuard {
 
         // Check if driver has completed onboarding by checking for driver record
         if (state.uri.path != RoutePaths.driverOnboarding) {
-          print('RouteGuard: Checking for driver record (path: ${state.uri.path})...');
+          _logger.debug('Checking for driver record', metadata: {
+            'path': state.uri.path,
+          });
           final driverResult =
               await driverRepository.getDriverByUserId(user.id.value);
 
           // If no driver record exists, redirect to onboarding
           return driverResult.fold(
             (failure) {
-              print('RouteGuard: No driver record - redirecting to onboarding');
+              _logger.info('No driver record found, redirecting to onboarding');
               return RoutePaths.driverOnboarding;
             },
             (driver) {
-              print('RouteGuard: Driver record found - Status: ${driver.status.name}');
+              _logger.debug('Driver record found', metadata: {
+                'status': driver.status.name,
+              });
 
               // Redirect based on status and current path
               if (state.uri.path == RoutePaths.driverStatus) {
                 // Allow access to status screen for non-approved drivers
                 if (driver.status.name != 'approved') {
-                  print('RouteGuard: Driver not approved, allowing status screen');
+                  _logger.debug('Driver not approved, allowing status screen access');
                   return null;
                 }
                 // Redirect approved drivers to home
-                print('RouteGuard: Driver approved, redirecting to home');
+                _logger.info('Driver approved, redirecting to home');
                 return RoutePaths.driverHome;
               } else if (state.uri.path == RoutePaths.driverHome) {
                 // Redirect non-approved drivers to status screen
                 if (driver.status.name != 'approved') {
-                  print('RouteGuard: Driver not approved, redirecting to status screen');
+                  _logger.info('Driver not approved, redirecting to status screen');
                   return RoutePaths.driverStatus;
                 }
                 // Allow approved drivers to access home
-                print('RouteGuard: Driver approved, allowing home access');
+                _logger.debug('Driver approved, allowing home access');
                 return null;
               }
 

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:local_auth/local_auth.dart';
 import '../../../../../core/constants/app_strings.dart';
+import '../../../../../core/services/app_logger.dart';
 import '../../../../../core/utils/validators.dart';
 import '../../../domain/entities/oauth_provider.dart' as domain;
 import '../../../domain/repositories/auth_repository.dart';
@@ -84,13 +85,15 @@ import 'login_state.dart';
 /// ```
 ///
 /// **IMPROVEMENT:**
-/// - [High Priority] Remove debug print statements (use logging service)
 /// - [High Priority] Add remember me functionality (persistent login)
 /// - [Medium Priority] Add rate limiting (prevent brute force)
 /// - [Medium Priority] Complete OAuth flow implementation (currently placeholder)
 /// - [Low Priority] Add social account linking (link OAuth to existing account)
 /// - [Low Priority] Add login analytics (track success/failure rates)
 class LoginBloc extends Bloc<LoginEvent, LoginState> {
+  /// Logger instance for authentication operations
+  static final _logger = AppLogger.auth();
+
   /// Repository for authentication operations
   ///
   /// **Used for:**
@@ -438,7 +441,10 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
 
     result.fold(
       (failure) {
-        print('LoginBloc: Login failed - ${failure.message}');
+        _logger.error('Login failed', metadata: {
+          'email': state.email,
+          'error': failure.message,
+        });
         emit(state.copyWith(
           status: LoginStatus.failure,
           isLoading: false,
@@ -446,7 +452,11 @@ class LoginBloc extends Bloc<LoginEvent, LoginState> {
         ));
       },
       (user) {
-        print('LoginBloc: Login success - User: ${user.email}, Role: ${user.role.type}');
+        _logger.info('Login successful', metadata: {
+          'userId': user.id.value,
+          'email': user.email.value,
+          'role': user.role.type,
+        });
         emit(state.copyWith(
           status: LoginStatus.success,
           isLoading: false,

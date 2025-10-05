@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import '../../features/auth/domain/entities/jwt_token.dart';
 import '../config/app_config.dart';
 import '../config/environment.dart';
 import '../security/certificate_pinner.dart';
@@ -92,11 +93,8 @@ class ApiClient {
   /// Optional CSRF token manager for CSRF protection
   final CsrfTokenManager? _csrfTokenManager;
 
-  /// Current JWT access token - injected into Authorization header
-  String? _authToken;
-
-  /// JWT refresh token - used to obtain new access token when expired
-  String? _refreshToken;
+  /// Current JWT token object - contains access token, refresh token, and expiry metadata
+  JwtToken? _jwtToken;
 
   /// Private constructor - use factory methods to create instances
   ///
@@ -196,12 +194,15 @@ class ApiClient {
   /// );
   /// ```
   ///
+  /// **Security:**
+  /// - certificatePinner: REQUIRED - SSL certificate pinning for man-in-the-middle protection
+  /// - csrfTokenManager: REQUIRED - CSRF token management for cross-site request forgery protection
+  ///
   /// **IMPROVEMENT:**
-  /// - [High Priority] Make certificatePinner and csrfTokenManager required for production
-  /// - Add compile-time check to ensure security features are enabled in release builds
+  /// - [Low Priority] Add compile-time check to ensure security features are enabled in release builds
   factory ApiClient.production({
-    CertificatePinner? certificatePinner,
-    CsrfTokenManager? csrfTokenManager,
+    required CertificatePinner certificatePinner,
+    required CsrfTokenManager csrfTokenManager,
   }) {
     AppConfig.setEnvironment(Environment.production);
     return ApiClient._(
@@ -278,7 +279,7 @@ class ApiClient {
   ///   // User is authenticated
   /// }
   /// ```
-  String? getAuthToken() => _authToken;
+  JwtToken? getAuthToken() => _jwtToken;
 
   /// Sets CSRF token manager after initialization
   ///
@@ -365,7 +366,7 @@ class ApiClient {
     final interceptors = [
       RequestInterceptor(),
       AuthInterceptor(
-        getAuthToken: () => _authToken,
+        getAuthToken: () => _jwtToken,
         getCsrfToken: () => null, // Deprecated - using CsrfInterceptor instead
       ),
     ];
@@ -414,11 +415,8 @@ class ApiClient {
   ///   refreshToken: loginResponse.refreshToken,
   /// );
   /// ```
-  void setAuthToken(String? token, {String? refreshToken}) {
-    _authToken = token;
-    if (refreshToken != null) {
-      _refreshToken = refreshToken;
-    }
+  void setAuthToken(JwtToken? token) {
+    _jwtToken = token;
   }
 
   /// Clears all authentication tokens
@@ -440,8 +438,7 @@ class ApiClient {
   /// apiClient.clearTokens();
   /// ```
   void clearTokens() {
-    _authToken = null;
-    _refreshToken = null;
+    _jwtToken = null;
     // Note: CSRF tokens are ephemeral and not cached, so no need to clear
   }
 
@@ -477,43 +474,9 @@ class ApiClient {
   /// - [Medium Priority] Implement exponential backoff for refresh retries
   /// - [Low Priority] Emit stream event for UI to show "refreshing session" message
   Future<void> _handleTokenExpired() async {
-    try {
-      // Attempt to refresh the token
-      final refreshToken = _refreshToken;
-      if (refreshToken != null && refreshToken.isNotEmpty) {
-        // Call refresh endpoint (path relative to baseUrl which already includes /api/v1)
-        final response = await _dio.post(
-          '/users/refresh',
-          data: {'refresh_token': refreshToken},
-          options: Options(
-            headers: {
-              'Authorization': 'Bearer $refreshToken',
-            },
-          ),
-        );
-
-        if (response.statusCode == 200 && response.data != null) {
-          // Extract new tokens from response
-          final data = response.data as Map<String, dynamic>;
-          final newAccessToken = data['access_token'] as String?;
-          final newRefreshToken = data['refresh_token'] as String?;
-
-          if (newAccessToken != null) {
-            // Update stored tokens
-            _authToken = newAccessToken;
-            if (newRefreshToken != null) {
-              _refreshToken = newRefreshToken;
-            }
-            return; // Successfully refreshed
-          }
-        }
-      }
-    } catch (e) {
-      // Log refresh failure (error reporting service should be used here)
-      debugPrint('Token refresh failed: $e');
-    }
-
-    // If refresh fails, clear tokens and force re-authentication
+    // Token refresh is now handled by TokenManager
+    // This method is deprecated but kept for backward compatibility
+    // Simply clear tokens to force re-authentication
     clearTokens();
   }
 

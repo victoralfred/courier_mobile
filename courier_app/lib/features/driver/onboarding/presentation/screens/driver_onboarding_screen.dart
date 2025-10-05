@@ -11,6 +11,8 @@ import 'package:delivery_app/features/drivers/domain/value_objects/driver_status
 import 'package:delivery_app/features/drivers/domain/value_objects/availability_status.dart';
 import 'package:delivery_app/features/drivers/domain/value_objects/vehicle_info.dart';
 import 'package:delivery_app/features/drivers/domain/value_objects/vehicle_type.dart';
+import 'package:delivery_app/core/widgets/common/connectivity_banner.dart';
+import 'package:delivery_app/core/widgets/common/sync_status_indicator.dart';
 
 class DriverOnboardingScreen extends StatefulWidget {
   const DriverOnboardingScreen({super.key});
@@ -108,6 +110,9 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
               context.go(RoutePaths.login);
             },
           ),
+          actions: const [
+            SyncStatusIndicator(),
+          ],
         ),
         body: _isCheckingAuth
             ? const Center(child: CircularProgressIndicator())
@@ -136,13 +141,18 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                       ],
                     ),
                   )
-                : Theme(
-                    data: Theme.of(context).copyWith(
-                      colorScheme: Theme.of(context).colorScheme.copyWith(
-                            primary: Theme.of(context).primaryColor,
+                : Column(
+                    children: [
+                      const ConnectivityBanner(),
+                      Expanded(
+                        child: Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme:
+                                Theme.of(context).colorScheme.copyWith(
+                                      primary: Theme.of(context).primaryColor,
+                                    ),
                           ),
-                    ),
-                    child: Stepper(
+                          child: Stepper(
                       currentStep: _currentStep,
                       onStepContinue:
                           _currentStep == 3 ? null : _onStepContinue,
@@ -206,7 +216,10 @@ class _DriverOnboardingScreenState extends State<DriverOnboardingScreen> {
                               : StepState.disabled,
                         ),
                       ],
-                    ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
       );
 

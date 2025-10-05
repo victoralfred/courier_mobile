@@ -8,6 +8,8 @@ import '../../../orders/presentation/blocs/order/order_bloc.dart';
 import '../../../orders/presentation/blocs/order/order_event.dart';
 import '../../../orders/presentation/blocs/order/order_state.dart';
 import '../../../orders/presentation/widgets/order_card.dart';
+import '../../../../core/widgets/common/connectivity_banner.dart';
+import '../../../../core/widgets/common/sync_status_indicator.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -72,13 +74,21 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
         appBar: AppBar(
           title: const Text('Customer Home'),
           actions: [
+            const SyncStatusIndicator(),
             IconButton(
               icon: const Icon(Icons.logout),
               onPressed: () => _handleLogout(context),
             ),
           ],
         ),
-        body: _screens[_currentIndex],
+        body: Column(
+          children: [
+            const ConnectivityBanner(),
+            Expanded(
+              child: _screens[_currentIndex],
+            ),
+          ],
+        ),
         floatingActionButton: _currentIndex == 1
             ? FloatingActionButton.extended(
                 onPressed: () => context.push('/customer/home/orders/create'),
